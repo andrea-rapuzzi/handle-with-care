@@ -19,6 +19,7 @@ const { start } = require('../dev-server');
 const seed = fs.readFileSync(path.join(__dirname, '..', 'data', 'log-iniziale.csv'), 'utf8');
 
 let n = 0;
+const pad2 = v => String(v).padStart(2, '0');
 const ok = (name) => { n++; console.log('  ok  ' + name); };
 
 (async () => {
@@ -58,6 +59,34 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.ok(P.clean({ data: '2026-11-31', ora: '10:00', grammi: 3450 }).error);
   assert.deepStrictEqual(P.clean({ data: '2026-11-15', ora: '10:00', grammi: '3450', nota: ' nudo ' }).p, { data: '2026-11-15', ora: '10:00', grammi: 3450, nota: 'nudo' });
   ok('obiettivi: identici alla tabella sulle righe, interpolati in mezzo; validazione del peso');
+
+  // --- tendenza del peso ---
+  assert.strictEqual(Calcs.trendPeso([{ data: '2026-11-01', ora: '08:00', grammi: 3000 }]), null);
+  assert.strictEqual(Calcs.trendPeso([{ data: '2026-11-01', ora: '08:00', grammi: 3000 }, { data: '2026-11-01', ora: '20:00', grammi: 3050 }]), null); // meno di un giorno
+  const tp = Calcs.trendPeso([{ data: '2026-10-01', ora: '08:00', grammi: 2000 }, { data: '2026-11-01', ora: '08:00', grammi: 3000 }, { data: '2026-11-03', ora: '08:00', grammi: 3060 }, { data: '2026-11-05', ora: '08:00', grammi: 3120 }]);
+  assert.strictEqual(tp.n, 3); assert.ok(Math.abs(tp.g_giorno - 30) < 1e-9); assert.strictEqual(tp.da.data, '2026-11-01'); // la pesata di ottobre è fuori dai 14 giorni
+  ok('peso: tendenza in grammi al giorno sulle pesate degli ultimi 14 giorni');
+
+  // --- trofei ---
+  assert.strictEqual(Calcs.TROFEI.length, 50); assert.strictEqual(new Set(Calcs.TROFEI.map(t => t.id)).size, 50);
+  Calcs.TROFEI.forEach(t => assert.ok(t.nome && t.desc && t.n > 0 && Calcs.CATEGORIE.some(c => c.id === t.cat), t.id));
+  const tro = (log, pesi) => Object.fromEntries(Calcs.trofei(Calcs.fromEvents(log), pesi).map(t => [t.id, t]));
+  assert.ok(Object.values(tro([], [])).every(t => !t.ok && t.v === 0));
+  const pp = (data, ora, latte, ml) => ({ data, ora, evento: 'Poppata', latte, ml: ml || 0 });
+  const pn = (data, ora, pipi, cacca) => ({ data, ora, evento: 'Pannolino', pipi, cacca });
+  const t1 = tro([pp('2026-11-01', '22:00', 'Materno'), pp('2026-11-01', '22:40', 'Artificiale', 120), pp('2026-11-02', '04:30', 'Artificiale', 900),
+    pn('2026-11-02', '05:00', 1, 1), pn('2026-11-02', '06:00', 0, 0), pp('2026-11-02', '06:00', 'Coccola')],
+  [{ data: '2026-11-01', ora: '09:00', grammi: 3200 }, { data: '2026-11-04', ora: '09:00', grammi: 3700 }]);
+  assert.ok(t1.pop1.ok && t1.misto.ok && t1.bot100.ok && t1.l1.ok && t1.notte1.ok && t1.dopp.ok && t1.vuoto.ok && t1.gain500.ok);
+  assert.strictEqual(t1.pop50.v, 2); // 22:00 e 22:40 sono una poppata sola; la coccola non conta
+  assert.strictEqual(t1.l1.data, '2026-11-02'); assert.strictEqual(t1.gain500.data, '2026-11-04');
+  assert.ok(t1.gap5.ok); assert.strictEqual(t1.gap6.v, 350); // dalle 22:40 alle 04:30
+  assert.ok(!t1.kg4.ok && t1.kg4.v === 3700);
+  const sette = Array.from({ length: 7 }, (_, d) => Array.from({ length: 6 }, (_, h) => pn(`2026-11-${pad2(d + 1)}`, `0${h}:00`, 1, 0))).flat();
+  assert.ok(tro(sette, []).idrat.ok && tro(sette, []).g7.ok);
+  assert.ok(!tro(sette.filter(e => !(e.data === '2026-11-04' && e.ora === '00:00')), []).idrat.ok); // un giorno con 5 pipì interrompe la serie
+  assert.strictEqual(tro([pp('2026-11-01', '20:00', 'Materno'), pp('2026-11-02', '20:00', 'Materno')], []).gap5.v, 0); // oltre 12 ore non è una nottata
+  ok('trofei: 50 definiti, contatori e date di sblocco');
 
   // --- API ---
   const srv = await start(0); const base = 'http://localhost:' + srv.address().port;

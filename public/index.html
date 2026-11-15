@@ -35,6 +35,7 @@
   <div class="lx-tabs" role="tablist" aria-label="Sezioni">
     <button type="button" class="lx-tab lx-on" role="tab" id="t-registra" data-tab="registra" aria-selected="true" aria-controls="p-registra">Registra</button>
     <button type="button" class="lx-tab" role="tab" id="t-dashboard" data-tab="dashboard" aria-selected="false" aria-controls="p-dashboard">Dashboard</button>
+    <button type="button" class="lx-tab" role="tab" id="t-trofei" data-tab="trofei" aria-selected="false" aria-controls="p-trofei">Trofei</button>
   </div>
 
   <section id="p-registra" role="tabpanel" aria-labelledby="t-registra">
@@ -116,15 +117,32 @@
         <div class="lx-ch" id="ch_pann"></div></div>
     </div>
 
+    <div class="lx-sec"><h2>Peso</h2><p>Tutte le pesate, con la tendenza delle ultime due settimane.</p></div>
+    <div class="lx-grid">
+      <div class="lx-card wide" data-c="peso"><h2>Andamento del peso</h2><p class="lx-note" id="peso-trend">·</p>
+        <div class="lx-leg"><span><i class="lx-sw" data-c="5"></i>Pesate</span><span><i class="lx-sw lx-sw-dash"></i>Tendenza</span></div>
+        <div class="lx-ch" id="ch_peso"></div></div>
+    </div>
+
     <details><summary>Come sono contati i dati</summary><dl>
       <dt>Poppata</dt><dd>Ogni biberon o poppata al seno. Se due poppate iniziano a meno di un'ora una dall'altra, diventano una sola. Una poppata notturna a cavallo della mezzanotte conta nel giorno in cui è iniziata.</dd>
       <dt>Latte materno, artificiale, misto</dt><dd>Il tipo scelto quando si registra la poppata. Una poppata unita che contiene sia materno sia artificiale è mista.</dd>
       <dt>ml</dt><dd>Solo i biberon con i millilitri annotati. Le poppate al seno e i biberon senza quantità non hanno ml.</dd>
       <dt>Pipì e cacca</dt><dd>Contate tutte, anche quelle trovate addosso. Un pannolino vuoto non aggiunge nulla.</dd>
       <dt>Medie</dt><dd>Calcolate sugli ultimi 7 giorni completi. Oggi è escluso perché è ancora in corso, e i giorni senza nessuna registrazione non contano.</dd>
+      <dt>Tendenza del peso</dt><dd>La retta che passa più vicino alle pesate degli ultimi 14 giorni, contati dall'ultima pesata. Indica quanti grammi al giorno sta prendendo, in media.</dd>
       <dt>Fuori dai conti delle poppate</dt><dd>Le coccole al seno senza latte e gli episodi di pianto e vomito.</dd>
     </dl></details>
     </div>
+  </section>
+
+  <section id="p-trofei" role="tabpanel" aria-labelledby="t-trofei" hidden>
+    <div class="lx-card lx-tro-sum">
+      <span class="lx-tro-big" aria-hidden="true">🏆</span>
+      <div><b id="tro-n">·</b><span id="tro-ultimo">Si sbloccano da soli, registrando.</span>
+        <div class="lx-bar" role="progressbar" aria-label="Trofei sbloccati" aria-valuemin="0" id="tro-bar"><i class="lx-bar-f"></i></div></div>
+    </div>
+    <div id="tro-list"></div>
   </section>
 
   <details id="dati"><summary>Dati e accesso</summary>
@@ -205,6 +223,16 @@
     </div>
   </form>
 </dialog>
+
+<div class="lx-win" id="win" hidden role="dialog" aria-modal="true" aria-labelledby="win-t" aria-describedby="win-d">
+  <div class="lx-win-box">
+    <div class="lx-win-cup" aria-hidden="true">🏆</div>
+    <p class="lx-win-k">Nuovo trofeo!</p>
+    <h2 id="win-t">·</h2>
+    <p id="win-d">·</p>
+    <button type="button" class="lx-btn lx-primary" id="win-ok">Evviva!</button>
+  </div>
+</div>
 
 <div class="lx-toast" id="toast" role="status" aria-live="polite"></div>
 
