@@ -14,7 +14,7 @@ function entered(v) {
   if (typeof v !== 'string') return v;
   if (v.startsWith("'")) return v.slice(1);
   let m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 + 25569;
-  m = v.match(/^(\d{1,2}):(\d{2})$/); if (m) return (+m[1] * 60 + +m[2]) / 1440;
+  // "19:30" scritto come testo NON diventa un orario: nel foglio vero (in italiano) resta testo.
   if (v !== '' && !isNaN(Number(v))) return Number(v);
   if (v.startsWith('=')) throw new Error('una formula è finita nel foglio: ' + v);
   return v;

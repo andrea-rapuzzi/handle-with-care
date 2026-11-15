@@ -127,7 +127,7 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   const nuovo = E.clean({ data: '2026-11-15', ora: '03:20', evento: 'Poppata', latte: 'Artificiale', ml: 60, fine: '03:45', nota: '=1+1 poi 1/2' }).ev; nuovo.id = 'n1';
   await Sh.add(nuovo);
   const r106 = G.state.grid[105];
-  assert.strictEqual(r106[0], ser('2026-11-15')); assert.strictEqual(r106[2], 'Poppata'); assert.strictEqual(r106[6], 60);
+  assert.strictEqual(r106[0], ser('2026-11-15')); assert.strictEqual(r106[1], frac('03:20')); assert.strictEqual(r106[2], 'Poppata'); assert.strictEqual(r106[6], 60);
   assert.strictEqual(r106[7], 'fino alle 03:45, =1+1 poi 1/2'); assert.strictEqual(r106[8], 'n1'); assert.strictEqual(r106[9], 'f');
   const back = (await Sh.list()).find(e => e.id === 'n1');
   assert.deepStrictEqual(back, nuovo);
