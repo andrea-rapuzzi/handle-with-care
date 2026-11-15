@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Diario del piccolo</title>
+<title>Handle With Care</title>
+<meta name="apple-mobile-web-app-title" content="Handle With Care">
+<meta name="application-name" content="Handle With Care">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#171715" media="(prefers-color-scheme:dark)">
@@ -12,7 +14,7 @@
 <body>
 
 <main class="lx lx-login" id="login" hidden>
-  <h1>Diario del piccolo</h1>
+  <h1>Handle With Care</h1>
   <form id="login-form" class="lx-card">
     <label class="lx-lab" for="pw">Password</label>
     <input class="lx-in" id="pw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
@@ -22,7 +24,7 @@
 </main>
 
 <main class="lx" id="app" hidden>
-  <h1>Diario del piccolo</h1>
+  <h1>Handle With Care</h1>
   <div class="lx-tabs" role="tablist" aria-label="Sezioni">
     <button type="button" class="lx-tab lx-on" role="tab" id="t-registra" data-tab="registra" aria-selected="true" aria-controls="p-registra">Registra</button>
     <button type="button" class="lx-tab" role="tab" id="t-dashboard" data-tab="dashboard" aria-selected="false" aria-controls="p-dashboard">Dashboard</button>
@@ -136,7 +138,7 @@
 
 <dialog id="dlg" class="lx-dlg" aria-labelledby="dlg-t">
   <form id="f" novalidate>
-    <h2 id="dlg-t">Nuova registrazione</h2>
+    <h2 id="dlg-t" tabindex="-1" autofocus>Nuova registrazione</h2>
 
     <div class="lx-row2">
       <div><label class="lx-lab" for="f-data">Giorno</label><input class="lx-in" id="f-data" type="date" required></div>
@@ -147,16 +149,12 @@
       <fieldset class="lx-seg"><legend>Pipì</legend>
         <label><input type="radio" name="pipi" value="0" checked><span>No</span></label>
         <label><input type="radio" name="pipi" value="1"><span>Sì</span></label>
-        <label><input type="radio" name="pipi" value="2"><span>2</span></label>
-        <label><input type="radio" name="pipi" value="3"><span>3</span></label>
       </fieldset>
       <fieldset class="lx-seg"><legend>Cacca</legend>
         <label><input type="radio" name="cacca" value="0" checked><span>No</span></label>
         <label><input type="radio" name="cacca" value="1"><span>Sì</span></label>
-        <label><input type="radio" name="cacca" value="2"><span>2</span></label>
-        <label><input type="radio" name="cacca" value="3"><span>3</span></label>
       </fieldset>
-      <p class="lx-note">Più di una se ne trovi anche addosso. Due "No" registrano un pannolino vuoto.</p>
+      <p class="lx-note">Due "No" registrano un pannolino vuoto.</p>
     </div>
 
     <div data-ev="Poppata">
@@ -172,8 +170,6 @@
           <div class="lx-chips" id="ml-chips"></div>
         </div>
       </div>
-      <label class="lx-lab" for="f-fine">Finita alle (facoltativo)</label>
-      <input class="lx-in" id="f-fine" type="time">
     </div>
 
     <div data-ev="Peso">

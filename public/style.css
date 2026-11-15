@@ -85,6 +85,16 @@ button,input,select{font:inherit;color:inherit}
 .lx-ev{display:grid;grid-template-columns:3.2rem 1fr;gap:2px 10px;width:100%;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;text-align:left;cursor:pointer}
 .lx-day + .lx-ev{border-top:0}
 .lx-ev:hover .lx-ev-t{text-decoration:underline}
+.lx-list details.lx-dayacc{margin:0;color:var(--fg);font-size:1rem;border-top:1px solid var(--line)}
+.lx-list .lx-day + details.lx-dayacc,.lx-list details.lx-dayacc:first-child{border-top:0}
+.lx-list > .lx-ev + details.lx-dayacc{margin-top:6px}
+.lx-dayacc summary{display:flex;align-items:center;gap:8px;min-height:46px;padding:6px 0;cursor:pointer;list-style:none;color:var(--fg)}
+.lx-dayacc summary::-webkit-details-marker{display:none}
+.lx-dayacc summary::before{content:"";width:.45rem;height:.45rem;margin:0 4px 0 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.lx-dayacc[open] summary::before{transform:rotate(45deg)}
+.lx-dayacc-n{margin-left:auto;font-size:.85rem;color:var(--muted)}
+.lx-dayacc > .lx-ev:first-of-type{border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){.lx-dayacc summary::before{transition:none}}
 .lx-ev-h{color:var(--muted)}
 .lx-ev-n{grid-column:2;font-size:.85rem;color:var(--muted)}
 #more{margin-top:12px;width:100%}
@@ -93,6 +103,7 @@ button,input,select{font:inherit;color:inherit}
 @media (min-width:560px){.lx-dlg{margin:auto;border-radius:18px}}
 .lx-dlg::backdrop{background:rgba(0,0,0,.45)}
 .lx-dlg h2{font-family:Georgia,serif;font-weight:400;font-size:1.5rem}
+.lx-dlg h2:focus{outline:none}
 .lx-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .lx-seg{border:0;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px}
 .lx-seg legend{padding:0;margin-bottom:4px;font-size:.85rem;color:var(--muted)}
@@ -103,7 +114,8 @@ button,input,select{font:inherit;color:inherit}
 .lx-seg input:focus-visible + span{outline:2px solid var(--c0);outline-offset:2px}
 .lx-mlrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .lx-mlrow .lx-in{width:6.5rem}
-.lx-mlrow .lx-chip{padding:8px 14px;min-height:46px}
+.lx-mlrow .lx-chips{flex:1 1 100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(2.9rem,1fr));gap:6px}
+.lx-mlrow .lx-chip{padding:8px 0;min-height:46px}
 .lx-dbtns{display:flex;gap:8px;margin-top:18px}
 .lx-sp{flex:1}
 

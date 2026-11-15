@@ -11,7 +11,7 @@
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0 }, ml: { label: 'ml', c: 1 }, pipi: { label: 'pipì', c: 3 }, cacca: { label: 'cacca', c: 4 } };
-  const state = { metric: 'poppate', data: null, pesi: [], shown: 30, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'poppate', data: null, pesi: [], openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -145,19 +145,33 @@
     const list = $('list'); list.replaceChildren();
     const all = log.concat(state.pesi).sort((a, b) => a.ts - b.ts);
     if (!all.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna registrazione.'; list.append(p); $('more').hidden = true; return; }
-    const rows = all.slice().reverse().slice(0, state.shown);
-    let day = null;
+    // si mostrano giorni interi: i primi state.shown giorni, i più recenti
+    const days = Array.from(new Set(all.map(e => e.data))).sort().reverse(), keep = new Set(days.slice(0, state.shown));
+    const rows = all.slice().reverse().filter(e => keep.has(e.data));
+    // Oggi resta aperto; ogni giorno precedente è chiuso in una tendina (che resta aperta se l'hai aperta, anche al ricaricamento dei dati)
+    const perDay = new Map(); all.forEach(e => perDay.set(e.data, (perDay.get(e.data) || 0) + 1));
+    let day = null, box = list;
     rows.forEach(e => {
-      if (e.data !== day) { day = e.data; const h = document.createElement('p'); h.className = 'lx-day'; h.textContent = e.data === now.data ? 'oggi' : dayLong(e.data); list.append(h); }
+      if (e.data !== day) {
+        day = e.data;
+        if (day === now.data) { const h = document.createElement('p'); h.className = 'lx-day'; h.textContent = 'oggi'; list.append(h); box = list; }
+        else {
+          const d = document.createElement('details'), s = document.createElement('summary'), k = day, n = perDay.get(k);
+          d.className = 'lx-dayacc'; d.open = state.openDays.has(k);
+          const dl = dayLong(k); s.textContent = dl.charAt(0).toUpperCase() + dl.slice(1); const c = document.createElement('span'); c.className = 'lx-dayacc-n'; c.textContent = n === 1 ? '1 registrazione' : `${n} registrazioni`; s.append(c);
+          d.addEventListener('toggle', () => { if (d.open) state.openDays.add(k); else state.openDays.delete(k); });
+          d.append(s); list.append(d); box = d;
+        }
+      }
       const b = document.createElement('button'); b.type = 'button'; b.className = 'lx-ev';
       const h = document.createElement('span'); h.className = 'lx-ev-h'; h.textContent = e.ora;
       const t = document.createElement('span'); t.className = 'lx-ev-t'; t.textContent = descr(e);
       b.append(h, t);
       if (e.nota) { const n = document.createElement('span'); n.className = 'lx-ev-n'; n.textContent = e.nota; b.append(n); }
       b.addEventListener('click', () => openForm(e.grammi ? 'Peso' : e.evento, e));
-      list.append(b);
+      box.append(b);
     });
-    $('more').hidden = all.length <= state.shown;
+    $('more').hidden = days.length <= state.shown;
   }
 
   // Barre di avanzamento: latte (dal peso più recente) e pipì (almeno 6 al giorno)
@@ -245,7 +259,8 @@
     const freq = new Map();
     (state.data ? state.data.log : []).forEach(r => { if (r.ml > 0) freq.set(r.ml, (freq.get(r.ml) || 0) + 1); });
     let vals = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]);
-    if (vals.length < 3) vals = [30, 60, 90, 120];
+    if (vals.length < 3) vals = [30, 60, 90];
+    vals = Array.from(new Set(vals.concat([100, 120]))); // 100 e 120 sempre a portata di dito
     const box = $('ml-chips'); box.replaceChildren();
     vals.sort((a, b) => a - b).forEach(v => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'lx-chip'; b.textContent = int(v);
@@ -263,18 +278,20 @@
     const now = adesso();
     $('f-data').value = ev ? ev.data : now.data; $('f-ora').value = ev ? ev.ora : now.ora;
     $('f-nota').value = ev ? ev.nota : '';
-    radio('pipi', ev ? Math.min(3, ev.pipi) : 0); radio('cacca', ev ? Math.min(3, ev.cacca) : 0);
+    radio('pipi', ev ? Math.min(1, ev.pipi) : 0); radio('cacca', ev ? Math.min(1, ev.cacca) : 0);
     const log = state.data ? state.data.log : [];
     const lastP = log.filter(r => r.evento === 'Poppata' && r.latte !== 'Coccola').pop();
     radio('latte', ev && ev.latte ? ev.latte : (lastP ? lastP.latte : 'Materno'));
-    $('f-ml').value = ev && ev.ml > 0 ? ev.ml : ''; $('f-fine').value = ev ? ev.fine : '';
+    $('f-ml').value = ev && ev.ml > 0 ? ev.ml : '';
     radio('tipo', ev && group === 'Altro' ? ev.evento : 'Altro');
     const lastPe = state.pesi[state.pesi.length - 1];
     $('f-grammi').value = ev && ev.grammi ? ev.grammi : ''; $('f-grammi').placeholder = lastPe ? `ultimo: ${lastPe.grammi}` : 'es. 3450'; grammiKg();
     mlChips(); mlVisible();
     $('f-err').hidden = true; $('f-del').hidden = !ev; $('f-save').disabled = false;
+    // Il fuoco va sul titolo, non sul primo campo: su iOS il fuoco sulla data aprirebbe subito il selettore.
+    // Data, ora e gli altri campi si aprono solo quando li tocchi.
     dlg.showModal();
-    if (group === 'Peso') $('f-grammi').focus();
+    $('dlg-t').focus({ preventScroll: true });
   }
 
   function grammiKg() { const v = Number($('f-grammi').value); $('f-grammi-kg').textContent = v >= 500 ? `= ${kg(v)}` : 'Ad esempio 3450 per 3,45 kg.'; }
@@ -287,11 +304,11 @@
     const api = g === 'Peso' ? '/api/pesi' : '/api/events';
     if (g === 'Peso') { delete b.evento; b.grammi = $('f-grammi').value === '' ? 0 : Number($('f-grammi').value); }
     if (g === 'Pannolino') {
-      // un conteggio oltre 3 (arrivato da un import) resta com'è se non viene toccato
-      const keep = (k) => ed && ed[k] > 3 && radio(k) === '3' ? ed[k] : Number(radio(k));
+      // un conteggio oltre 1 (registrato prima, o arrivato da un import) resta com'è se resta su "Sì"
+      const keep = (k) => ed && ed[k] > 1 && radio(k) === '1' ? ed[k] : Number(radio(k));
       b.pipi = keep('pipi'); b.cacca = keep('cacca');
     }
-    if (g === 'Poppata') { b.latte = radio('latte'); b.ml = $('f-ml').value === '' ? 0 : Number($('f-ml').value); b.fine = $('f-fine').value; }
+    if (g === 'Poppata') { b.latte = radio('latte'); b.ml = $('f-ml').value === '' ? 0 : Number($('f-ml').value); b.fine = ed && ed.fine ? ed.fine : ''; } // il campo non è più nel modulo: un'ora di fine già salvata resta
     const err = $('f-err'); err.hidden = true; $('f-save').disabled = true;
     try {
       await call(ed ? api + '?id=' + encodeURIComponent(ed.id) : api, ed ? 'PUT' : 'POST', b);
@@ -306,7 +323,7 @@
     catch (x) { const err = $('f-err'); err.textContent = x.message; err.hidden = false; }
   });
   document.querySelectorAll('[data-new]').forEach(b => b.addEventListener('click', () => openForm(b.dataset.new)));
-  $('more').addEventListener('click', () => { state.shown += 30; renderRegistra(); });
+  $('more').addEventListener('click', () => { state.shown += 14; renderRegistra(); });
 
   // ---------- schede ----------
   function showTab(name) {

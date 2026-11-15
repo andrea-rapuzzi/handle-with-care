@@ -1,4 +1,4 @@
-# Diario del piccolo
+# Handle With Care
 
 Mini sito per registrare poppate e pannolini dal telefono e vederli in una dashboard. Protetto da una password condivisa. Nessun build, nessuna dipendenza npm.
 

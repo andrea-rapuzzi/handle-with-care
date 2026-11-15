@@ -1,4 +1,4 @@
-# Diario del piccolo
+# Handle With Care
 
 Sito statico (`public/`) + quattro handler (`api/`), online su Netlify. Lingua dell'interfaccia: italiano. Niente em dash nei testi.
 
