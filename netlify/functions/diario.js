@@ -8,7 +8,8 @@ const HANDLERS = {
   events: require('../../api/events'),
   import: require('../../api/import'),
   pesi: require('../../api/pesi'),
-  session: require('../../api/session')
+  session: require('../../api/session'),
+  trofei: require('../../api/trofei')
 };
 
 exports.handler = async event => {

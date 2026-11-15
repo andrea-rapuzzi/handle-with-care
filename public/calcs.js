@@ -200,8 +200,8 @@
     { id: 'gap8', cat: 'notte', k: 'gapNotte', n: 480, u: 'min', nome: 'Dormire come un ghiro', desc: '8 ore di fila senza poppate, di notte.' },
     // Pannolini
     { id: 'camb1', cat: 'pannolini', k: 'cambi', n: 1, nome: 'Battesimo del fasciatoio', desc: 'Il primo cambio di pannolino nel diario.' },
-    { id: 'camb100', cat: 'pannolini', k: 'cambi', n: 100, nome: 'Centurione del fasciatoio', desc: '100 pannolini cambiati.' },
-    { id: 'camb1000', cat: 'pannolini', k: 'cambi', n: 1000, nome: 'Montagna di pannolini', desc: '1000 pannolini cambiati. Applausi a chi li ha cambiati.' },
+    { id: 'camb100', cat: 'pannolini', k: 'cambi', n: 100, nome: 'Cacao meravigliao', desc: '100 pannolini cambiati.' },
+    { id: 'camb1000', cat: 'pannolini', k: 'cambi', n: 1000, nome: 'Navighiamo in un mare di?', desc: '1000 pannolini cambiati. Applausi a chi li ha cambiati.' },
     { id: 'pipi1', cat: 'pannolini', k: 'pipi', n: 1, nome: 'Fontanella', desc: 'La prima pipì registrata.' },
     { id: 'pipi100', cat: 'pannolini', k: 'pipi', n: 100, nome: 'Idrante', desc: '100 pipì.' },
     { id: 'pipi500', cat: 'pannolini', k: 'pipi', n: 500, nome: 'Fontana di Trevi', desc: '500 pipì: lanciate una monetina.' },

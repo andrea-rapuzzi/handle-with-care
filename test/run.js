@@ -13,7 +13,7 @@ const Calcs = require('../public/calcs.js');
 const E = require('../lib/events');
 const P = require('../lib/pesi');
 const crypto = require('crypto');
-const { sheetsStore, pesiStore } = require('../lib/sheets');
+const { sheetsStore, pesiStore, trofeiStore } = require('../lib/sheets');
 const { fakeGoogle } = require('./fake-google');
 const { start } = require('../dev-server');
 const seed = fs.readFileSync(path.join(__dirname, '..', 'data', 'log-iniziale.csv'), 'utf8');
@@ -141,6 +141,16 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual((await req('/api/events')).j.length, 1); // le pesate non finiscono tra gli eventi
   ok('pesate: crea, modifica, elimina, separate dagli eventi');
 
+  assert.strictEqual((await req('/api/trofei')).s, 200); assert.deepStrictEqual((await req('/api/trofei')).j, []);
+  const tr1 = await req('/api/trofei', 'POST', { trofei: [{ id: 'pop1', data: '2026-11-02' }, { id: 'pop1', data: '2026-11-03' }, { id: 'camb1', data: '2026-11-02' }] });
+  assert.strictEqual(tr1.s, 200); assert.strictEqual(tr1.j.aggiunti, 2);
+  const tr2 = await req('/api/trofei', 'POST', { trofei: [{ id: 'pop1', data: '2026-11-09' }] });
+  assert.strictEqual(tr2.j.aggiunti, 0); assert.strictEqual(tr2.j.trofei.find(t => t.id === 'pop1').data, '2026-11-02'); // il primo resta
+  assert.strictEqual((await req('/api/trofei', 'POST', { trofei: [{ id: 'inventato', data: '2026-11-02' }] })).s, 400);
+  assert.strictEqual((await req('/api/trofei', 'POST', { trofei: [{ id: 'l1', data: '2026-02-30' }] })).s, 400);
+  assert.strictEqual((await req('/api/trofei', 'POST', {})).s, 400);
+  ok('trofei: registrati una volta sola, id e date controllati');
+
   const i1 = await req('/api/import', 'POST', { csv: seed });
   assert.strictEqual(i1.s, 200); assert.strictEqual(i1.j.totale, evs.length + 1);
   const i2 = await req('/api/import', 'POST', { csv: seed });
@@ -238,6 +248,16 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual((await Pe2.list()).length, 1); // seconda istanza: la scheda c'è già, non la ricrea
   ok('foglio: scheda Peso creata al primo uso, pesate scritte e rilette, anche a mano in kg; scheda Log intatta');
 
+  const Tr = trofeiStore({ creds: { client_email: email, private_key: privateKey }, sheetId: 'FOGLIO', apiBase: G.url, tokenUrl: G.url + '/token' });
+  assert.deepStrictEqual(await Tr.list(), []);
+  const TT = G.state.extra.Trofei; assert.deepStrictEqual(TT.grid[0].slice(0, 5), ['ID', 'Trofeo', 'Descrizione', 'Sbloccato il', 'Registrato il']);
+  await Tr.addMany([{ id: 'pop1', nome: 'Primo sorso', desc: 'x', data: '2026-11-02', registrato: '2026-11-15 10:00' }, { id: 'l1', nome: '=Il primo litro', desc: 'y', data: '2026-11-07', registrato: '2026-11-15 10:00' }]);
+  assert.deepStrictEqual(TT.grid[1].slice(0, 5), ['pop1', 'Primo sorso', 'x', ser('2026-11-02'), '2026-11-15 10:00']);
+  assert.strictEqual(TT.grid[2][1], '=Il primo litro'); // testo, non formula
+  assert.deepStrictEqual(await Tr.list(), [{ id: 'pop1', data: '2026-11-02' }, { id: 'l1', data: '2026-11-07' }]);
+  assert.strictEqual(JSON.stringify(G.state.grid), logPrima);
+  ok('foglio: scheda Trofei creata al primo uso, righe aggiunte in un colpo e rilette');
+
   G.state.writable = false; g[1][8] = '';
   await assert.rejects(Sh.list(), e => e.code === 'NO_STORE' && /Editor/.test(e.message));
   await assert.rejects(mk({ sheetId: 'ALTRO' }).list(), e => e.code === 'NO_STORE' && /GOOGLE_SHEET_ID/.test(e.message));
@@ -268,6 +288,7 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual((await ev('/api/events', 'DELETE', null, { rawQuery: undefined, queryStringParameters: { id: nid } })).statusCode, 200);
   const npz = await ev('/api/pesi', 'POST', { data: '2026-11-17', ora: '08:20', grammi: 3500 });
   assert.strictEqual(npz.statusCode, 201); assert.ok(JSON.parse((await ev('/api/pesi')).body).some(x => x.grammi === 3500));
+  assert.strictEqual((await ev('/api/trofei')).statusCode, 200);
   Object.entries(SEC).forEach(([k, v]) => assert.strictEqual(np.headers[k], v));
   const toml = fs.readFileSync(path.join(__dirname, '..', 'netlify.toml'), 'utf8');
   Object.entries(SEC).forEach(([k, v]) => assert.ok(toml.includes(`${k} = "${v}"`), 'netlify.toml: manca ' + k));

@@ -11,7 +11,7 @@
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0, k: 'pop' }, ml: { label: 'ml', c: 0, k: 'pop' }, pipi: { label: 'pipì', c: 3, k: 'pann' }, cacca: { label: 'cacca', c: 4, k: 'pann' } };
-  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -302,7 +302,7 @@
       T.forEach(t => {
         const d = document.createElement('div'); d.className = 'lx-tro' + (t.ok ? ' lx-got' : ''); d.dataset.c = c.c;
         const i = document.createElement('span'); i.className = 'lx-tro-i'; i.setAttribute('aria-hidden', 'true'); i.textContent = t.ok ? ICONA[t.cat] : '🔒';
-        const b = document.createElement('b'); b.textContent = t.nome;
+        const b = document.createElement('b'); b.textContent = t.ok ? t.nome : '? ? ?';
         const p = document.createElement('span'); p.className = 'lx-tro-d'; p.textContent = t.desc;
         d.append(i, b, p);
         if (t.ok) { const s = document.createElement('span'); s.className = 'lx-tro-q'; s.textContent = 'Sbloccato ' + dayLong(t.data); d.append(s); }
@@ -312,7 +312,7 @@
           const f = document.createElement('i'); f.className = 'lx-bar-f'; f.style.width = Math.min(100, t.v / t.n * 100) + '%'; br.append(f);
           d.append(br, q);
         }
-        d.setAttribute('aria-label', `${t.nome}. ${t.desc} ${t.ok ? 'Sbloccato ' + dayLong(t.data) : 'Ancora da sbloccare: ' + avanz(t)}.`);
+        d.setAttribute('aria-label', `${t.ok ? t.nome : 'Trofeo segreto'}. ${t.desc} ${t.ok ? 'Sbloccato ' + dayLong(t.data) : 'Ancora da sbloccare: ' + avanz(t)}.`);
         grid.append(d);
       });
       box.append(sec, grid);
@@ -340,18 +340,43 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('win').hidden) prossimo(); });
   const sbloccati = () => new Set(state.trofei.filter(t => t.ok).map(t => t.id));
 
-  function render() { state.trofei = Calcs.trofei(state.data ? state.data.log : [], state.pesi); renderRegistra(); renderDash(); renderTrofei(); }
+  // Trofei: quelli calcolati dai dati, più quelli già registrati nella scheda Trofei (restano anche se i dati cambiano)
+  function calcolaTrofei() {
+    const R = state.registrati || new Map();
+    return Calcs.trofei(state.data ? state.data.log : [], state.pesi).map(t => {
+      if (!R.has(t.id)) return t;
+      return Object.assign(t, { ok: true, data: R.get(t.id) || t.data, v: t.n });
+    });
+  }
+  function render() { state.trofei = calcolaTrofei(); renderRegistra(); renderDash(); renderTrofei(); }
 
   // ---------- dati ----------
   async function load() {
     let evs, pesi;
-    try { [evs, pesi] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; })]); }
+    let reg;
+    try { [evs, pesi, reg] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; }),
+      call('/api/trofei').catch(e => { console.warn('Trofei non caricati:', e.message); return null; })]); }
     catch (e) { $('foot').textContent = 'Dati non aggiornati: ' + e.message; return; }
+    if (reg) state.registrati = new Map(reg.map(t => [t.id, t.data]));
     if (pesi) state.pesi = pesi.map(p => Object.assign({}, p, { ts: Calcs.fromEvents([{ data: p.data, ora: p.ora }])[0].ts })).sort((a, b) => a.ts - b.ts);
     const log = Calcs.fromEvents(evs);
     state.data = log.length ? Calcs.allFromLog(log, adesso().data) : null;
     $('foot').textContent = 'Aggiornato alle ' + new Date().toLocaleTimeString('it', { hour: '2-digit', minute: '2-digit' }) + '. Si aggiorna da solo ogni minuto.';
     render();
+    registra();
+  }
+
+  // Scrive nella scheda Trofei quelli sbloccati che non ci sono ancora. Solo se la scheda è stata letta:
+  // senza sapere cosa c'è già, non si scrive nulla.
+  let registrando = false;
+  async function registra() {
+    if (!state.registrati || registrando) return;
+    const nuovi = state.trofei.filter(t => t.ok && !state.registrati.has(t.id)).map(t => ({ id: t.id, data: t.data }));
+    if (!nuovi.length) return;
+    registrando = true;
+    try { const r = await call('/api/trofei', 'POST', { trofei: nuovi }); state.registrati = new Map(r.trofei.map(t => [t.id, t.data])); }
+    catch (e) { console.warn('Trofei non registrati:', e.message); }
+    finally { registrando = false; }
   }
 
   // ---------- modulo di registrazione ----------
