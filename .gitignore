@@ -1,4 +1,4 @@
 .data/
 .env
-.vercel/
+.netlify/
 node_modules/

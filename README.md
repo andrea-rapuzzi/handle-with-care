@@ -3,7 +3,7 @@
 Mini sito per registrare poppate e pannolini dal telefono e vederli in una dashboard. Protetto da una password condivisa. Nessun build, nessuna dipendenza npm.
 
 ```
-Telefono  ->  /api/events (Vercel)  ->  Google Sheet, scheda Log
+Telefono  ->  /api/events (Netlify)  ->  Google Sheet, scheda Log
                     |
               pagina: scheda Registra + scheda Dashboard (calcoli e grafici nel browser)
 ```
@@ -14,7 +14,8 @@ Telefono  ->  /api/events (Vercel)  ->  Google Sheet, scheda Log
 - `api/session.js`: login, logout, stato della sessione.
 - `api/events.js`: elenco, creazione, modifica, eliminazione degli eventi. `?format=csv` per l'export.
 - `api/import.js`: import di un CSV con le colonne del vecchio foglio.
-- `lib/`: `auth.js` (password e cookie firmato), `sheets.js` (lettura e scrittura del Google Sheet), `store.js` (sceglie tra foglio e file JSON locale), `events.js` (validazione, CSV), `http.js`.
+- `netlify/functions/api.js`: l'unica funzione Netlify, instrada `/api/*` ai tre file di `api/`. `netlify.toml`: cartella pubblicata, instradamento, header.
+- `lib/`: `auth.js` (password e cookie firmato), `sheets.js` (lettura e scrittura del Google Sheet), `store.js` (sceglie tra foglio e file JSON locale), `events.js` (validazione, CSV), `http.js`, `headers.js` (header di sicurezza).
 - `data/log-iniziale.csv`: copia dei dati del foglio al 7 novembre, usata dai test. Non è servita dal sito.
 - `dev-server.js`, `test/run.js`, `test/fake-google.js`: server locale, test, finto Google per i test.
 
@@ -47,17 +48,19 @@ Il sito entra nel foglio con un account tecnico, senza rendere pubblico nulla.
 4. Apri l'account appena creato, scheda "Chiavi", "Aggiungi chiave", "Crea nuova chiave", formato **JSON**. Si scarica un file.
 5. Apri il Google Sheet, "Condividi", e aggiungi come **Editor** l'indirizzo dell'account di servizio (finisce con `iam.gserviceaccount.com`).
 
-### 2. Vercel
+### 2. Netlify
 
-1. Importa il repository come progetto Vercel. Preset "Other", nessun comando di build. Vercel serve `public/` e trasforma `api/` in funzioni.
-2. In Settings, Environment Variables, aggiungi:
+1. Su https://app.netlify.com scegli "Add new project", "Import an existing project" e collega il repository GitHub. Non serve compilare nulla: cartella pubblicata e funzioni sono già in `netlify.toml`. Lascia vuoto il comando di build.
+2. In Project configuration, Environment variables, aggiungi:
    - `DIARIO_PASSWORD`: la password del sito.
    - `GOOGLE_SHEET_ID`: l'ID del foglio, o il suo indirizzo intero.
    - `GOOGLE_SERVICE_ACCOUNT_JSON`: tutto il contenuto del file JSON del punto 1.4, incollato così com'è.
    - `SHEET_TAB` (facoltativa): nome della scheda, se non è "Log".
-3. Ridistribuisci ed entra. Se qualcosa non è configurato, il sito lo dice in chiaro (foglio non condiviso, ID sbagliato, scheda mancante).
+3. Rilancia il deploy (Deploys, "Trigger deploy") ed entra. Se qualcosa non è configurato, il sito lo dice in chiaro (foglio non condiviso, ID sbagliato, scheda mancante).
 
-Il file JSON è una chiave: non va nel repository. Dopo averlo incollato su Vercel si può cancellare.
+Il file JSON è una chiave: non va nel repository. Dopo averlo incollato su Netlify si può cancellare.
+
+Netlify concede alle funzioni circa 4 KB in tutto per le variabili d'ambiente. Il JSON del service account ne occupa poco più di 2: ci sta, ma non aggiungere altre variabili lunghe.
 
 Sul telefono: apri il sito, entra una volta, "Aggiungi a schermata Home". Il login dura un anno per dispositivo.
 

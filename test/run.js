@@ -7,7 +7,7 @@ const path = require('path');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'diario-'));
 process.env.DIARIO_FILE = path.join(tmp, 'eventi.json');
 process.env.DIARIO_PASSWORD = 'prova-123';
-delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON; delete process.env.GOOGLE_SHEET_ID; delete process.env.VERCEL;
+delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON; delete process.env.GOOGLE_SHEET_ID; delete process.env.DIARIO_ONLINE;
 
 const Calcs = require('../public/calcs.js');
 const E = require('../lib/events');
@@ -170,6 +170,31 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   await assert.rejects(mk({ creds: { client_email: email, private_key: altra } }).list(), e => e.code === 'NO_STORE' && /service account/.test(e.message));
   ok('foglio: errori di configurazione spiegati in chiaro');
   G.srv.close();
+
+  // --- adattatore Netlify: stessi handler, chiamati con l'evento della funzione ---
+  const { handler } = require('../netlify/functions/api');
+  const SEC = require('../lib/headers');
+  const ev = (p, method, body, extra) => handler(Object.assign({ path: p, httpMethod: method || 'GET', headers: { Cookie: nfCookie }, rawQuery: '', body: body ? JSON.stringify(body) : null, isBase64Encoded: false }, extra));
+  let nfCookie = '';
+  assert.strictEqual((await ev('/api/events')).statusCode, 401);
+  assert.strictEqual((await ev('/.netlify/functions/api')).statusCode, 404);
+  assert.strictEqual((await ev('/api/constructor')).statusCode, 404);
+  const nl = await ev('/api/session', 'POST', { password: 'prova-123' });
+  assert.strictEqual(nl.statusCode, 200); assert.ok(/; Secure/.test(nl.headers['Set-Cookie']));
+  nfCookie = nl.headers['Set-Cookie'].split(';')[0];
+  const nb = { data: '2026-11-17', ora: '08:15', evento: 'Pannolino', pipi: 1 };
+  const np = await ev('/api/events', 'POST', null, { body: Buffer.from(JSON.stringify(nb)).toString('base64'), isBase64Encoded: true });
+  assert.strictEqual(np.statusCode, 201);
+  const nid = JSON.parse(np.body).id;
+  assert.ok(JSON.parse((await ev('/api/events')).body).some(e => e.id === nid));
+  const nc = await ev('/api/events', 'GET', null, { rawQuery: 'format=csv' });
+  assert.ok(/text\/csv/.test(nc.headers['Content-Type']) && nc.body.includes('2026-11-17'));
+  assert.strictEqual((await ev('/api/events', 'DELETE', null, { rawQuery: undefined, queryStringParameters: { id: nid } })).statusCode, 200);
+  Object.entries(SEC).forEach(([k, v]) => assert.strictEqual(np.headers[k], v));
+  const toml = fs.readFileSync(path.join(__dirname, '..', 'netlify.toml'), 'utf8');
+  Object.entries(SEC).forEach(([k, v]) => assert.ok(toml.includes(`${k} = "${v}"`), 'netlify.toml: manca ' + k));
+  delete process.env.DIARIO_ONLINE;
+  ok('Netlify: adattatore (login, query, corpo base64, percorsi sconosciuti) e header allineati a netlify.toml');
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log(`\n${n} gruppi di test passati.`);
