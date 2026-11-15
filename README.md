@@ -14,7 +14,8 @@ Telefono  ->  /api/events (Netlify)  ->  Google Sheet, scheda Log
 - `api/session.js`: login, logout, stato della sessione.
 - `api/events.js`: elenco, creazione, modifica, eliminazione degli eventi. `?format=csv` per l'export.
 - `api/import.js`: import di un CSV con le colonne del vecchio foglio.
-- `netlify/functions/diario.js`: l'unica funzione Netlify, instrada `/api/*` ai tre file di `api/`. `netlify.toml`: cartella pubblicata, instradamento, header.
+- `api/pesi.js`: elenco, creazione, modifica, eliminazione delle pesate.
+- `netlify/functions/diario.js`: l'unica funzione Netlify, instrada `/api/*` ai file di `api/`. `netlify.toml`: cartella pubblicata, instradamento, header.
 - `lib/`: `auth.js` (password e cookie firmato), `sheets.js` (lettura e scrittura del Google Sheet), `store.js` (sceglie tra foglio e file JSON locale), `events.js` (validazione, CSV), `http.js`, `headers.js` (header di sicurezza).
 - `data/log-iniziale.csv`: copia dei dati del foglio al 7 novembre, usata dai test. Non è servita dal sito.
 - `dev-server.js`, `test/run.js`, `test/fake-google.js`: server locale, test, finto Google per i test.
@@ -34,6 +35,7 @@ Il sito legge e scrive la scheda **Log** del foglio. Le colonne A:H restano quel
 - Le colonne da J in poi (formule) non vengono mai scritte. Le nuove righe finiscono nella prima riga libera, dove le formule ci sono già, quindi le schede Giorni e Orario continuano ad aggiornarsi.
 - Eliminare dal sito cancella l'intera riga del foglio.
 - Non usare la colonna I per altro e non cancellare gli ID.
+- Le pesate stanno nella scheda **Peso** (Data, Ora, Peso in grammi, Note, ID), che il sito crea da solo la prima volta. Anche lì si può scrivere a mano; un peso scritto in kg, come `3,45`, viene letto come 3450 g.
 - Un evento inserito in ritardo finisce in fondo al foglio, non in ordine. Il sito ordina per data e ora, quindi i suoi numeri restano giusti; la colonna K del foglio ("Nuova poppata") invece presume l'ordine cronologico.
 
 ## Metterlo online

@@ -33,6 +33,21 @@
       <button type="button" class="lx-act" data-new="Poppata"><b>Poppata</b><span id="last-poppata">nessuna registrata</span></button>
       <button type="button" class="lx-act" data-new="Pannolino"><b>Pannolino</b><span id="last-pannolino">nessuno registrato</span></button>
       <button type="button" class="lx-act lx-act-s" data-new="Altro"><b>Altro</b><span>vomito, pianto, nota</span></button>
+      <button type="button" class="lx-act lx-act-s" data-new="Peso"><b>Peso</b><span id="last-peso">da registrare</span></button>
+    </div>
+
+    <div class="lx-sec"><h2>Obiettivi di oggi</h2><p id="ob-base">Registra il peso per avere l'obiettivo di latte.</p></div>
+    <div class="lx-card lx-goals">
+      <div class="lx-goal" id="ob-latte">
+        <div class="lx-goal-h"><span class="lx-k">Latte</span><span class="lx-goal-v" id="ob-latte-v">·</span></div>
+        <div class="lx-bar" role="progressbar" aria-label="Latte bevuto oggi rispetto all'obiettivo" aria-valuemin="0" id="ob-latte-bar"><i class="lx-bar-f"></i><i class="lx-bar-m"></i></div>
+        <p class="lx-goal-n" id="ob-latte-n"></p>
+      </div>
+      <div class="lx-goal" id="ob-pipi">
+        <div class="lx-goal-h"><span class="lx-k">Pipì</span><span class="lx-goal-v" id="ob-pipi-v">·</span></div>
+        <div class="lx-bar" role="progressbar" aria-label="Pipì di oggi rispetto all'obiettivo" aria-valuemin="0" id="ob-pipi-bar"><i class="lx-bar-f"></i></div>
+        <p class="lx-goal-n" id="ob-pipi-n"></p>
+      </div>
     </div>
 
     <div class="lx-sec"><h2>Oggi, <span data-b="u-data">…</span></h2></div>
@@ -159,6 +174,12 @@
       </div>
       <label class="lx-lab" for="f-fine">Finita alle (facoltativo)</label>
       <input class="lx-in" id="f-fine" type="time">
+    </div>
+
+    <div data-ev="Peso">
+      <label class="lx-lab" for="f-grammi">Peso in grammi</label>
+      <input class="lx-in" id="f-grammi" type="number" inputmode="numeric" min="500" max="20000" step="1" placeholder="es. 3450">
+      <p class="lx-note" id="f-grammi-kg"></p>
     </div>
 
     <div data-ev="Altro">

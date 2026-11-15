@@ -21,16 +21,19 @@ function entered(v) {
 }
 
 function fakeGoogle({ publicKey, email, tab = 'Log', gid = 664740751, rowCount = 1000, seed = [] }) {
-  const state = { grid: [], rowCount, calls: [], writable: true };
-  const blank = () => { const r = new Array(COLS).fill(''); r[9] = 'f'; r[10] = 'f'; r[11] = 'f'; return r; };
-  const row = n => { while (state.grid.length < n) state.grid.push(blank()); return state.grid[n - 1]; };
-  seed.forEach((r, i) => r.forEach((v, c) => { row(i + 1)[c] = v; }));
-  const lastData = (c0, c1) => { for (let i = state.grid.length; i > 0; i--) if (state.grid[i - 1].slice(c0, c1 + 1).some(v => v !== '')) return i; return 0; };
-  const put = (r0, c0, values, mode) => {
+  // La scheda Log vive in state.grid / state.rowCount (con le "formule" in J:L). Le altre schede, create con addSheet, in state.extra.
+  const state = { grid: [], rowCount, gid, calls: [], writable: true, extra: {}, formule: true };
+  const blank = T => { const r = new Array(COLS).fill(''); if (T.formule) { r[9] = 'f'; r[10] = 'f'; r[11] = 'f'; } return r; };
+  const row = (T, n) => { while (T.grid.length < n) T.grid.push(blank(T)); return T.grid[n - 1]; };
+  seed.forEach((r, i) => r.forEach((v, c) => { row(state, i + 1)[c] = v; }));
+  const lastData = (T, c0, c1) => { for (let i = T.grid.length; i > 0; i--) if (T.grid[i - 1].slice(c0, c1 + 1).some(v => v !== '')) return i; return 0; };
+  const put = (T, r0, c0, values, mode) => {
     if (!state.writable) { const e = new Error('The caller does not have permission'); e.status = 403; throw e; }
-    if (r0 + values.length - 1 > state.rowCount) { const e = new Error('Range exceeds grid limits'); e.status = 400; throw e; }
-    values.forEach((vals, i) => vals.forEach((v, j) => { if (c0 + j > 8) throw new Error('scrittura oltre la colonna I'); row(r0 + i)[c0 + j] = mode === 'RAW' ? v : entered(v); }));
+    if (r0 + values.length - 1 > T.rowCount) { const e = new Error('Range exceeds grid limits'); e.status = 400; throw e; }
+    values.forEach((vals, i) => vals.forEach((v, j) => { if (c0 + j > 8) throw new Error('scrittura oltre la colonna I'); row(T, r0 + i)[c0 + j] = mode === 'RAW' ? v : entered(v); }));
   };
+  const byName = t => (t === tab ? state : state.extra[t]);
+  const byGid = id => (id === gid ? state : Object.values(state.extra).find(T => T.gid === id));
 
   const srv = http.createServer((req, res) => {
     let s = ''; req.on('data', c => { s += c; }); req.on('end', () => {
@@ -48,30 +51,36 @@ function fakeGoogle({ publicKey, email, tab = 'Log', gid = 664740751, rowCount =
         if (!m || m[1] !== 'FOGLIO') return send(404, { error: { message: 'Requested entity was not found.' } });
         const rest = m[2], body = s ? JSON.parse(s) : {};
         state.calls.push(req.method + ' ' + rest.replace(/'.*?'!/, ''));
-        if (rest === '') return send(200, { sheets: [{ properties: { sheetId: 1, title: 'Come usarlo', gridProperties: { rowCount: 1000 } } }, { properties: { sheetId: gid, title: tab, gridProperties: { rowCount: state.rowCount } } }] });
+        if (rest === '') return send(200, { sheets: [{ properties: { sheetId: 1, title: 'Come usarlo', gridProperties: { rowCount: 1000 } } }, { properties: { sheetId: gid, title: tab, gridProperties: { rowCount: state.rowCount } } }]
+          .concat(Object.entries(state.extra).map(([t, T]) => ({ properties: { sheetId: T.gid, title: t, gridProperties: { rowCount: T.rowCount } } }))) });
         if (rest === ':batchUpdate') {
-          body.requests.forEach(r => {
-            if (r.deleteDimension) { const g = r.deleteDimension.range; if (g.sheetId !== gid || g.endIndex - g.startIndex !== 1) throw new Error('delete inatteso'); state.grid.splice(g.startIndex, 1); state.rowCount--; }
-            else if (r.appendDimension) { if (r.appendDimension.sheetId !== gid) throw new Error('append inatteso'); state.rowCount += r.appendDimension.length; }
-            else throw new Error('richiesta non prevista');
+          const replies = body.requests.map(r => {
+            if (r.deleteDimension) { const g = r.deleteDimension.range, T = byGid(g.sheetId); if (!T || g.endIndex - g.startIndex !== 1) throw new Error('delete inatteso'); T.grid.splice(g.startIndex, 1); T.rowCount--; return {}; }
+            if (r.appendDimension) { const T = byGid(r.appendDimension.sheetId); if (!T) throw new Error('append inatteso'); T.rowCount += r.appendDimension.length; return {}; }
+            if (r.addSheet) {
+              const pr = r.addSheet.properties; if (byName(pr.title)) throw new Error('scheda già esistente');
+              const T = state.extra[pr.title] = { gid: 1000 + Object.keys(state.extra).length, grid: [], rowCount: (pr.gridProperties && pr.gridProperties.rowCount) || 1000, formule: false };
+              return { addSheet: { properties: { sheetId: T.gid, title: pr.title } } };
+            }
+            throw new Error('richiesta non prevista');
           });
-          return send(200, {});
+          return send(200, { replies });
         }
-        if (rest === '/values:batchUpdate') { body.data.forEach(d => { const a = parseA1(d.range); put(a.r0, a.c0, d.values, body.valueInputOption); }); return send(200, {}); }
+        if (rest === '/values:batchUpdate') { body.data.forEach(d => { const a = parseA1(d.range); put(byName(a.tab), a.r0, a.c0, d.values, body.valueInputOption); }); return send(200, {}); }
         const v = rest.match(/^\/values\/(.+?)(:append|:clear)?$/);
-        const a = parseA1(v[1]);
-        if (a.tab !== tab) return send(400, { error: { message: 'Unable to parse range: ' + v[1] } });
-        if (v[2] === ':clear') { for (let i = a.r0; i <= state.grid.length; i++) for (let c = a.c0; c <= a.c1; c++) row(i)[c] = ''; return send(200, {}); }
+        const a = parseA1(v[1]), T = byName(a.tab);
+        if (!T) return send(400, { error: { message: 'Unable to parse range: ' + v[1] } });
+        if (v[2] === ':clear') { for (let i = a.r0; i <= T.grid.length; i++) for (let c = a.c0; c <= a.c1; c++) row(T, i)[c] = ''; return send(200, {}); }
         if (v[2] === ':append') {
           if (q.get('insertDataOption') !== 'OVERWRITE') throw new Error('append senza OVERWRITE sposterebbe le formule');
-          const r0 = lastData(a.c0, a.c1) + 1; if (r0 + body.values.length - 1 > state.rowCount) state.rowCount = r0 + body.values.length - 1;
-          put(r0, a.c0, body.values, q.get('valueInputOption'));
-          return send(200, { updates: { updatedRange: `${tab}!A${r0}` } });
+          const r0 = lastData(T, a.c0, a.c1) + 1; if (r0 + body.values.length - 1 > T.rowCount) T.rowCount = r0 + body.values.length - 1;
+          put(T, r0, a.c0, body.values, q.get('valueInputOption'));
+          return send(200, { updates: { updatedRange: `${a.tab}!A${r0}` } });
         }
-        if (req.method === 'PUT') { put(a.r0, a.c0, body.values, q.get('valueInputOption')); return send(200, {}); }
+        if (req.method === 'PUT') { put(T, a.r0, a.c0, body.values, q.get('valueInputOption')); return send(200, {}); }
         if (q.get('valueRenderOption') !== 'UNFORMATTED_VALUE' || q.get('dateTimeRenderOption') !== 'SERIAL_NUMBER') throw new Error('lettura senza valori grezzi');
-        const n = lastData(a.c0, a.c1), values = [];
-        for (let i = a.r0; i <= n; i++) { const r = row(i).slice(a.c0, a.c1 + 1); while (r.length && r[r.length - 1] === '') r.pop(); values.push(r); }
+        const n = lastData(T, a.c0, a.c1), values = [];
+        for (let i = a.r0; i <= n; i++) { const r = row(T, i).slice(a.c0, a.c1 + 1); while (r.length && r[r.length - 1] === '') r.pop(); values.push(r); }
         return send(200, values.length ? { values } : {});
       } catch (e) { send(e.status || 500, { error: { message: e.message } }); }
     });

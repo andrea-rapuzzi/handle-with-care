@@ -11,8 +11,9 @@ delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON; delete process.env.GOOGLE_SHEET_
 
 const Calcs = require('../public/calcs.js');
 const E = require('../lib/events');
+const P = require('../lib/pesi');
 const crypto = require('crypto');
-const { sheetsStore } = require('../lib/sheets');
+const { sheetsStore, pesiStore } = require('../lib/sheets');
 const { fakeGoogle } = require('./fake-google');
 const { start } = require('../dev-server');
 const seed = fs.readFileSync(path.join(__dirname, '..', 'data', 'log-iniziale.csv'), 'utf8');
@@ -45,6 +46,19 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual(E.clean({ data: '2026-11-15', ora: '10:00', evento: 'Poppata', latte: 'Coccola', ml: 50 }).ev.ml, 0);
   ok('validazione eventi');
 
+  // --- obiettivi dal peso ---
+  Calcs.TABELLA.forEach(([k, a, b, c, d]) => assert.deepStrictEqual(Calcs.obiettivi(k * 1000), { kg: k, ml_min: a, ml_max: b, poppata_min: c, poppata_max: d, pipi_min: 6, fuori_tabella: false }));
+  const o32 = Calcs.obiettivi(3250);
+  assert.deepStrictEqual([o32.ml_min, o32.ml_max, o32.poppata_min, o32.poppata_max], [490, 650, 60, 85]); // a metà tra 3 e 3,5 kg, arrotondato a 5 ml
+  const o55 = Calcs.obiettivi(5500);
+  assert.ok(o55.fuori_tabella && o55.ml_min === 825 && o55.ml_max === 1100);
+  assert.strictEqual(Calcs.obiettivi(0), null); assert.strictEqual(Calcs.obiettivi(''), null);
+  assert.ok(P.clean({ data: '2026-11-15', ora: '10:00', grammi: 3.45 }).error);
+  assert.ok(P.clean({ data: '2026-11-15', ora: '10:00', grammi: 30000 }).error);
+  assert.ok(P.clean({ data: '2026-11-31', ora: '10:00', grammi: 3450 }).error);
+  assert.deepStrictEqual(P.clean({ data: '2026-11-15', ora: '10:00', grammi: '3450', nota: ' nudo ' }).p, { data: '2026-11-15', ora: '10:00', grammi: 3450, nota: 'nudo' });
+  ok('obiettivi: identici alla tabella sulle righe, interpolati in mezzo; validazione del peso');
+
   // --- API ---
   const srv = await start(0); const base = 'http://localhost:' + srv.address().port;
   let cookie = '';
@@ -56,6 +70,8 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual((await req('/api/events')).s, 401);
   assert.strictEqual((await req('/api/import', 'POST', { csv: seed })).s, 401);
   assert.strictEqual((await req('/api/events', 'POST', { data: '2026-11-15', ora: '10:00', evento: 'Pannolino' })).s, 401);
+  assert.strictEqual((await req('/api/pesi')).s, 401);
+  assert.strictEqual((await req('/api/pesi', 'POST', { data: '2026-11-15', ora: '10:00', grammi: 3450 })).s, 401);
   assert.strictEqual((await req('/data/log-iniziale.csv')).s, 404);
   assert.strictEqual((await req('/../lib/auth.js')).s, 404);
   ok('senza login: niente dati, niente scritture, file privati non serviti');
@@ -83,6 +99,18 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual((await req('/api/events?id=' + p1.j.id, 'DELETE')).s, 200);
   assert.strictEqual((await req('/api/events?id=' + p1.j.id, 'DELETE')).s, 404);
   ok('crea, modifica, elimina');
+
+  const w1 = await req('/api/pesi', 'POST', { data: '2026-11-14', ora: '18:00', grammi: 3450 });
+  assert.strictEqual(w1.s, 201); assert.strictEqual(w1.j.grammi, 3450);
+  const wv = await req('/api/pesi', 'POST', { data: '2026-11-10', ora: '09:00', grammi: 3300 });
+  assert.strictEqual((await req('/api/pesi', 'POST', { data: '2026-11-14', ora: '18:00', grammi: 3.45 })).s, 400);
+  let pw = (await req('/api/pesi')).j; assert.deepStrictEqual(pw.map(x => x.grammi), [3300, 3450]);
+  const wu = await req('/api/pesi?id=' + w1.j.id, 'PUT', { data: '2026-11-14', ora: '18:00', grammi: 3480 });
+  assert.strictEqual(wu.s, 200); assert.strictEqual(wu.j.creato, w1.j.creato);
+  assert.strictEqual((await req('/api/pesi?id=' + wv.j.id, 'DELETE')).s, 200);
+  pw = (await req('/api/pesi')).j; assert.deepStrictEqual(pw.map(x => x.grammi), [3480]);
+  assert.strictEqual((await req('/api/events')).j.length, 1); // le pesate non finiscono tra gli eventi
+  ok('pesate: crea, modifica, elimina, separate dagli eventi');
 
   const i1 = await req('/api/import', 'POST', { csv: seed });
   assert.strictEqual(i1.s, 200); assert.strictEqual(i1.j.totale, evs.length + 1);
@@ -162,6 +190,25 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   await Sh.add(nuovo); assert.strictEqual(g[1][8], 'n1');
   ok('foglio: import oltre la fine della griglia, svuotamento che conserva intestazione e formule');
 
+  // scheda Peso: creata se manca, Log intatto
+  const logPrima = JSON.stringify(G.state.grid);
+  const Pe = pesiStore({ creds: { client_email: email, private_key: privateKey }, sheetId: 'FOGLIO', apiBase: G.url, tokenUrl: G.url + '/token' });
+  assert.deepStrictEqual(await Pe.list(), []);
+  const T = G.state.extra.Peso; assert.ok(T); assert.deepStrictEqual(T.grid[0].slice(0, 5), ['Data', 'Ora', 'Peso (g)', 'Note', 'ID']);
+  const pz = Object.assign(P.clean({ data: '2026-11-14', ora: '18:00', grammi: 3450, nota: '=dopo il bagno' }).p, { id: 'p1' });
+  await Pe.add(pz);
+  assert.deepStrictEqual(T.grid[1].slice(0, 5), [ser('2026-11-14'), frac('18:00'), 3450, '=dopo il bagno', 'p1']);
+  assert.deepStrictEqual((await Pe.list())[0], pz);
+  T.grid.push(['14/11/2026', '7:05', '3,52', '', '', '', '', '', '', '', '', '']); // scritta a mano, in kg con la virgola
+  let pl = await Pe.list();
+  assert.strictEqual(pl.length, 2); assert.strictEqual(pl[1].grammi, 3520); assert.strictEqual(pl[1].ora, '07:05'); assert.ok(T.grid[2][4]);
+  await Pe.put(Object.assign({}, pz, { grammi: 3460 })); assert.strictEqual(T.grid[1][2], 3460);
+  assert.strictEqual(await Pe.del('p1'), true); pl = await Pe.list(); assert.strictEqual(pl.length, 1); assert.strictEqual(pl[0].grammi, 3520);
+  assert.strictEqual(JSON.stringify(G.state.grid), logPrima);
+  const Pe2 = pesiStore({ creds: { client_email: email, private_key: privateKey }, sheetId: 'FOGLIO', apiBase: G.url, tokenUrl: G.url + '/token' });
+  assert.strictEqual((await Pe2.list()).length, 1); // seconda istanza: la scheda c'è già, non la ricrea
+  ok('foglio: scheda Peso creata al primo uso, pesate scritte e rilette, anche a mano in kg; scheda Log intatta');
+
   G.state.writable = false; g[1][8] = '';
   await assert.rejects(Sh.list(), e => e.code === 'NO_STORE' && /Editor/.test(e.message));
   await assert.rejects(mk({ sheetId: 'ALTRO' }).list(), e => e.code === 'NO_STORE' && /GOOGLE_SHEET_ID/.test(e.message));
@@ -190,6 +237,8 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   const nc = await ev('/api/events', 'GET', null, { rawQuery: 'format=csv' });
   assert.ok(/text\/csv/.test(nc.headers['Content-Type']) && nc.body.includes('2026-11-17'));
   assert.strictEqual((await ev('/api/events', 'DELETE', null, { rawQuery: undefined, queryStringParameters: { id: nid } })).statusCode, 200);
+  const npz = await ev('/api/pesi', 'POST', { data: '2026-11-17', ora: '08:20', grammi: 3500 });
+  assert.strictEqual(npz.statusCode, 201); assert.ok(JSON.parse((await ev('/api/pesi')).body).some(x => x.grammi === 3500));
   Object.entries(SEC).forEach(([k, v]) => assert.strictEqual(np.headers[k], v));
   const toml = fs.readFileSync(path.join(__dirname, '..', 'netlify.toml'), 'utf8');
   Object.entries(SEC).forEach(([k, v]) => assert.ok(toml.includes(`${k} = "${v}"`), 'netlify.toml: manca ' + k));

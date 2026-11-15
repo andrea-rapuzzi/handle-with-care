@@ -8,8 +8,10 @@
   const n0 = new Intl.NumberFormat('it', { maximumFractionDigits: 0 });
   const n1 = new Intl.NumberFormat('it', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const int = v => n0.format(+v), dec = v => n1.format(+v);
+  const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
+  const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0 }, ml: { label: 'ml', c: 1 }, pipi: { label: 'pipì', c: 3 }, cacca: { label: 'cacca', c: 4 } };
-  const state = { metric: 'poppate', data: null, shown: 30, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'poppate', data: null, pesi: [], shown: 30, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -110,6 +112,7 @@
 
   // ---------- descrizione di un evento ----------
   function descr(e) {
+    if (e.grammi) return 'Peso: ' + kg(e.grammi);
     if (e.evento === 'Pannolino') {
       const p = [];
       if (e.pipi > 0) p.push(e.pipi > 1 ? `pipì ×${e.pipi}` : 'pipì');
@@ -135,10 +138,14 @@
 
     const u = D && D.ultimo && D.ultimo.data === now.data ? D.ultimo : { poppate: 0, ml_totali: 0, pipi: 0, cacca: 0 };
     bind('u-data', dayLong(now.data)); bind('u-poppate', int(u.poppate)); bind('u-ml', int(u.ml_totali)); bind('u-pipi', int(u.pipi)); bind('u-cacca', int(u.cacca));
+    const pe = state.pesi[state.pesi.length - 1];
+    $('last-peso').textContent = pe ? `${kg(pe.grammi)} · ${pe.data === now.data ? 'oggi' : dayShort(pe.data)}` : 'da registrare';
+    renderObiettivi(u, pe, now);
 
     const list = $('list'); list.replaceChildren();
-    if (!log.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna registrazione.'; list.append(p); $('more').hidden = true; return; }
-    const rows = log.slice().reverse().slice(0, state.shown);
+    const all = log.concat(state.pesi).sort((a, b) => a.ts - b.ts);
+    if (!all.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna registrazione.'; list.append(p); $('more').hidden = true; return; }
+    const rows = all.slice().reverse().slice(0, state.shown);
     let day = null;
     rows.forEach(e => {
       if (e.data !== day) { day = e.data; const h = document.createElement('p'); h.className = 'lx-day'; h.textContent = e.data === now.data ? 'oggi' : dayLong(e.data); list.append(h); }
@@ -147,10 +154,46 @@
       const t = document.createElement('span'); t.className = 'lx-ev-t'; t.textContent = descr(e);
       b.append(h, t);
       if (e.nota) { const n = document.createElement('span'); n.className = 'lx-ev-n'; n.textContent = e.nota; b.append(n); }
-      b.addEventListener('click', () => openForm(e.evento, e));
+      b.addEventListener('click', () => openForm(e.grammi ? 'Peso' : e.evento, e));
       list.append(b);
     });
-    $('more').hidden = log.length <= state.shown;
+    $('more').hidden = all.length <= state.shown;
+  }
+
+  // Barre di avanzamento: latte (dal peso più recente) e pipì (almeno 6 al giorno)
+  function bar(id, val, max, mark) {
+    const el = $(id), f = el.querySelector('.lx-bar-f'), m = el.querySelector('.lx-bar-m');
+    f.style.width = Math.min(100, max > 0 ? val / max * 100 : 0) + '%';
+    if (m) { m.hidden = mark == null; if (mark != null) m.style.left = Math.min(100, mark / max * 100) + '%'; }
+    el.setAttribute('aria-valuemax', String(max)); el.setAttribute('aria-valuenow', String(Math.min(val, max)));
+  }
+  function renderObiettivi(u, pe, now) {
+    const ob = (pe && Calcs.obiettivi(pe.grammi)) || { pipi_min: Calcs.PIPI_MIN };
+    const ml = +u.ml_totali, pipi = +u.pipi;
+    const L = $('ob-latte');
+    L.classList.toggle('lx-off', !pe);
+    if (pe) {
+      const giorni = Math.round((Date.parse(now.data) - Date.parse(pe.data)) / 86400000);
+      $('ob-base').textContent = `In base all'ultimo peso, ${kg(pe.grammi)} ` + (giorni <= 0 ? 'di oggi.' : giorni === 1 ? 'di ieri.' : `di ${giorni} giorni fa` + (giorni > 7 ? ': conviene ripesarlo.' : '.'));
+      $('ob-latte-v').textContent = `${int(ml)} / ${int(ob.ml_min)}-${int(ob.ml_max)} ml`;
+      $('ob-latte').style.setProperty('--bar', 'var(--c1)');
+      bar('ob-latte-bar', ml, ob.ml_max, ob.ml_min);
+      L.classList.toggle('lx-ok', ml >= ob.ml_min);
+      const stato = ml >= ob.ml_min ? (ml > ob.ml_max ? 'Sopra la fascia indicata.' : 'Obiettivo raggiunto.') : `Mancano almeno ${int(ob.ml_min - ml)} ml.`;
+      $('ob-latte-n').textContent = `${stato} A poppata ${int(ob.poppata_min)}-${int(ob.poppata_max)} ml, su 8 poppate. Contano solo i ml dei biberon.` + (ob.fuori_tabella ? ' Peso fuori tabella: stima a 150-200 ml per kg.' : '');
+    } else {
+      $('ob-base').textContent = "Registra il peso per avere l'obiettivo di latte.";
+      $('ob-latte-v').textContent = `${int(ml)} ml`;
+      bar('ob-latte-bar', 0, 1, null);
+      L.classList.remove('lx-ok');
+      $('ob-latte-n').textContent = 'Serve il peso: tocca Peso qui sopra.';
+    }
+    const P = $('ob-pipi'), min = ob.pipi_min;
+    P.style.setProperty('--bar', 'var(--c3)');
+    $('ob-pipi-v').textContent = `${int(pipi)} / ${int(min)}`;
+    bar('ob-pipi-bar', pipi, min, null);
+    P.classList.toggle('lx-ok', pipi >= min);
+    $('ob-pipi-n').textContent = pipi >= min ? 'Obiettivo raggiunto.' : `Ne ${min - pipi === 1 ? 'manca 1' : `mancano ${int(min - pipi)}`} per arrivare ad almeno ${int(min)} al giorno.`;
   }
 
   // ---------- scheda Dashboard ----------
@@ -183,9 +226,10 @@
 
   // ---------- dati ----------
   async function load() {
-    let evs;
-    try { evs = await call('/api/events'); }
+    let evs, pesi;
+    try { [evs, pesi] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; })]); }
     catch (e) { $('foot').textContent = 'Dati non aggiornati: ' + e.message; return; }
+    if (pesi) state.pesi = pesi.map(p => Object.assign({}, p, { ts: Calcs.fromEvents([{ data: p.data, ora: p.ora }])[0].ts })).sort((a, b) => a.ts - b.ts);
     const log = Calcs.fromEvents(evs);
     state.data = log.length ? Calcs.allFromLog(log, adesso().data) : null;
     $('foot').textContent = 'Aggiornato alle ' + new Date().toLocaleTimeString('it', { hour: '2-digit', minute: '2-digit' }) + '. Si aggiorna da solo ogni minuto.';
@@ -212,10 +256,10 @@
   }
 
   function openForm(kind, ev) {
-    const group = kind === 'Poppata' || kind === 'Pannolino' ? kind : 'Altro';
+    const group = kind === 'Poppata' || kind === 'Pannolino' || kind === 'Peso' ? kind : 'Altro';
     state.editing = ev || null; state.group = group;
     form.querySelectorAll('[data-ev]').forEach(d => { d.hidden = d.dataset.ev !== group; });
-    $('dlg-t').textContent = (ev ? 'Modifica: ' : '') + { Poppata: 'Poppata', Pannolino: 'Pannolino', Altro: 'Altro evento' }[group];
+    $('dlg-t').textContent = (ev ? 'Modifica: ' : '') + { Poppata: 'Poppata', Pannolino: 'Pannolino', Peso: 'Peso', Altro: 'Altro evento' }[group];
     const now = adesso();
     $('f-data').value = ev ? ev.data : now.data; $('f-ora').value = ev ? ev.ora : now.ora;
     $('f-nota').value = ev ? ev.nota : '';
@@ -225,16 +269,23 @@
     radio('latte', ev && ev.latte ? ev.latte : (lastP ? lastP.latte : 'Materno'));
     $('f-ml').value = ev && ev.ml > 0 ? ev.ml : ''; $('f-fine').value = ev ? ev.fine : '';
     radio('tipo', ev && group === 'Altro' ? ev.evento : 'Altro');
+    const lastPe = state.pesi[state.pesi.length - 1];
+    $('f-grammi').value = ev && ev.grammi ? ev.grammi : ''; $('f-grammi').placeholder = lastPe ? `ultimo: ${lastPe.grammi}` : 'es. 3450'; grammiKg();
     mlChips(); mlVisible();
     $('f-err').hidden = true; $('f-del').hidden = !ev; $('f-save').disabled = false;
     dlg.showModal();
+    if (group === 'Peso') $('f-grammi').focus();
   }
 
+  function grammiKg() { const v = Number($('f-grammi').value); $('f-grammi-kg').textContent = v >= 500 ? `= ${kg(v)}` : 'Ad esempio 3450 per 3,45 kg.'; }
+  $('f-grammi').addEventListener('input', grammiKg);
   form.addEventListener('change', mlVisible);
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const g = state.group, ed = state.editing;
     const b = { data: $('f-data').value, ora: $('f-ora').value, evento: g === 'Altro' ? radio('tipo') : g, nota: $('f-nota').value };
+    const api = g === 'Peso' ? '/api/pesi' : '/api/events';
+    if (g === 'Peso') { delete b.evento; b.grammi = $('f-grammi').value === '' ? 0 : Number($('f-grammi').value); }
     if (g === 'Pannolino') {
       // un conteggio oltre 3 (arrivato da un import) resta com'è se non viene toccato
       const keep = (k) => ed && ed[k] > 3 && radio(k) === '3' ? ed[k] : Number(radio(k));
@@ -243,7 +294,7 @@
     if (g === 'Poppata') { b.latte = radio('latte'); b.ml = $('f-ml').value === '' ? 0 : Number($('f-ml').value); b.fine = $('f-fine').value; }
     const err = $('f-err'); err.hidden = true; $('f-save').disabled = true;
     try {
-      await call(ed ? '/api/events?id=' + encodeURIComponent(ed.id) : '/api/events', ed ? 'PUT' : 'POST', b);
+      await call(ed ? api + '?id=' + encodeURIComponent(ed.id) : api, ed ? 'PUT' : 'POST', b);
       dlg.close(); toast(ed ? 'Modificato' : 'Registrato'); await load();
     } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = false; }
   });
@@ -251,7 +302,7 @@
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
   $('f-del').addEventListener('click', async () => {
     const ed = state.editing; if (!ed || !confirm(`Eliminare "${descr(ed)}" delle ${ed.ora}?`)) return;
-    try { await call('/api/events?id=' + encodeURIComponent(ed.id), 'DELETE'); dlg.close(); toast('Eliminato'); await load(); }
+    try { await call((ed.grammi ? '/api/pesi' : '/api/events') + '?id=' + encodeURIComponent(ed.id), 'DELETE'); dlg.close(); toast('Eliminato'); await load(); }
     catch (x) { const err = $('f-err'); err.textContent = x.message; err.hidden = false; }
   });
   document.querySelectorAll('[data-new]').forEach(b => b.addEventListener('click', () => openForm(b.dataset.new)));

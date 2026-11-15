@@ -1,11 +1,12 @@
 :root{
   --bg:#faf9f6;--panel:#fff;--fg:#1f1e1b;--muted:#6b6a64;--line:#e6e3dc;--grid:#ece9e2;--pop:#fff;
   --c0:#3f7fbf;--c1:#e08a3c;--c2:#8a6fc0;--c3:#d8b21f;--c4:#8b5e3c;
+  --ok:#2f7d4f;
   --radius:12px;
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#171715;--panel:#201f1d;--fg:#f1efe9;--muted:#9a978d;--line:#34322e;--grid:#2b2a27;--pop:#2a2927;
-    --c0:#6aa5de;--c1:#f0a35c;--c2:#a791d8;--c3:#e6c443;--c4:#b98562}
+    --c0:#6aa5de;--c1:#f0a35c;--c2:#a791d8;--c3:#e6c443;--c4:#b98562;--ok:#6cc28e}
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
@@ -65,8 +66,19 @@ button,input,select{font:inherit;color:inherit}
 .lx-act:active{transform:scale(.985)}
 .lx-act b{font-family:Georgia,serif;font-weight:400;font-size:1.5rem;line-height:1.15}
 .lx-act span{font-size:.85rem;color:var(--muted)}
-.lx-act-s{grid-column:1/-1;min-height:0;flex-direction:row;align-items:baseline;gap:10px;padding:12px 16px}
+.lx-act-s{min-height:0;gap:2px;padding:12px 16px}
 .lx-act-s b{font-size:1.1rem}
+
+.lx-goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:18px 24px}
+.lx-goal-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lx-goal-v{font-family:Georgia,serif;font-size:1.35rem}
+.lx-bar{position:relative;height:12px;margin:8px 0 6px;border-radius:999px;background:var(--line)}
+.lx-bar-f{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;background:var(--bar,var(--c0));transition:width .3s}
+.lx-bar-m{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--fg);opacity:.55}
+.lx-goal.lx-ok .lx-goal-v::after{content:" ✓";color:var(--ok)}
+.lx-goal.lx-off{opacity:.55}
+.lx-goal-n{margin:0;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){.lx-bar-f{transition:none}}
 
 .lx-list{padding:4px 16px}
 .lx-day{margin:14px 0 2px;font-size:.8rem;color:var(--muted);text-transform:capitalize}

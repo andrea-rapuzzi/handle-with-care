@@ -7,6 +7,7 @@ const HEADERS = require('../../lib/headers');
 const HANDLERS = {
   events: require('../../api/events'),
   import: require('../../api/import'),
+  pesi: require('../../api/pesi'),
   session: require('../../api/session')
 };
 

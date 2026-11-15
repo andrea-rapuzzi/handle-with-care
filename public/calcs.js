@@ -132,6 +132,28 @@
   }
   const all = (csvText, oggi) => allFromLog(loadLog(parseCSV(csvText)), oggi);
 
-  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, fascia, all, allFromLog };
+  // Obiettivi del giorno in base al peso (grammi). Latte: tabella per peso, con 8 poppate al giorno
+  // (150-200 ml per kg al giorno). Tra due righe si interpola, poi si arrotonda a 5 ml.
+  // Fuori tabella (sotto 2,5 o sopra 5 kg) vale la stessa regola dei ml per kg. Pipì: almeno 6 al giorno.
+  const TABELLA = [ // kg, totale min, totale max, a poppata min, a poppata max
+    [2.5, 375, 500, 45, 65], [3, 450, 600, 55, 75], [3.5, 525, 700, 65, 90],
+    [4, 600, 800, 75, 100], [4.5, 675, 900, 85, 115], [5, 750, 1000, 95, 125]];
+  const PIPI_MIN = 6;
+  function obiettivi(grammi) {
+    const kg = Number(grammi) / 1000;
+    if (!(kg > 0)) return null;
+    const r5 = v => Math.round(v / 5) * 5;
+    const first = TABELLA[0], last = TABELLA[TABELLA.length - 1];
+    let v;
+    if (kg < first[0] || kg > last[0]) v = [kg, 150 * kg, 200 * kg, 150 * kg / 8, 200 * kg / 8];
+    else {
+      let i = 0; while (i < TABELLA.length - 2 && kg > TABELLA[i + 1][0]) i++;
+      const a = TABELLA[i], b = TABELLA[i + 1], t = (kg - a[0]) / (b[0] - a[0]);
+      v = a.map((x, j) => x + (b[j] - x) * t);
+    }
+    return { kg, ml_min: r5(v[1]), ml_max: r5(v[2]), poppata_min: r5(v[3]), poppata_max: r5(v[4]), pipi_min: PIPI_MIN, fuori_tabella: kg < first[0] || kg > last[0] };
+  }
+
+  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, fascia, all, allFromLog, obiettivi, TABELLA, PIPI_MIN };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Calcs = api;
 })(typeof window !== 'undefined' ? window : globalThis);
