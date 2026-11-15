@@ -1,0 +1,105 @@
+Data,Ora,Evento,Pipi,Cacca,Latte,ml,Note
+2026-11-02,02:15,Pannolino,1,1,,,
+2026-11-02,02:30,Poppata,,,Materno,,fino alle 02:50
+2026-11-02,06:45,Pannolino,1,1,,,cacca mini
+2026-11-02,07:11,Poppata,,,Materno,,fino alle 07:30
+2026-11-02,10:00,Pannolino,1,1,,,"molta cacca, anche addosso"
+2026-11-02,10:18,Poppata,,,Materno,,fino alle 10:45
+2026-11-02,14:00,Pannolino,1,0,,,
+2026-11-02,14:30,Poppata,,,Materno,,fino alle 15:00
+2026-11-02,19:00,Pannolino,1,0,,,
+2026-11-02,19:18,Poppata,,,Materno,,fino alle 19:43
+2026-11-02,22:30,Pannolino,0,0,,,vuoto
+2026-11-02,22:55,Poppata,,,Materno,,fino alle 23:22
+2026-11-03,01:54,Pannolino,1,0,,,
+2026-11-03,02:02,Poppata,,,Materno,,fino alle 02:20
+2026-11-03,03:02,Poppata,,,Materno,,fino alle 03:07
+2026-11-03,04:40,Pannolino,2,0,,,1 pannolino + 1 addosso
+2026-11-03,04:48,Poppata,,,Materno,,fino alle 05:06
+2026-11-03,05:30,Poppata,,,Materno,,fino alle 05:40
+2026-11-03,08:45,Pannolino,1,0,,,
+2026-11-03,08:50,Poppata,,,Materno,,fino alle 09:23
+2026-11-03,11:00,Pannolino,0,0,,,vuoto
+2026-11-03,11:10,Poppata,,,Materno,,fino alle 11:20
+2026-11-03,13:13,Poppata,,,Materno,,fino alle 13:15
+2026-11-03,14:00,Pannolino,1,0,,,
+2026-11-03,14:12,Poppata,,,Materno,,fino alle 15:08
+2026-11-03,16:00,Poppata,,,Materno,,fino alle 16:15
+2026-11-03,17:10,Poppata,,,Materno,,fino alle 18:00
+2026-11-03,18:36,Pannolino,1,0,,,
+2026-11-03,18:56,Poppata,,,Materno,,fino alle 19:13
+2026-11-03,23:23,Pannolino,1,2,,,"poca cacca + altra cacca, pipi addosso"
+2026-11-03,23:32,Poppata,,,Materno,,fino alle 00:16
+2026-11-04,00:20,Poppata,,,Materno,,fino alle 01:15
+2026-11-04,01:50,Pannolino,0,0,,,vuoto
+2026-11-04,01:50,Pianto,,,,,pianto inconsolabile
+2026-11-04,02:18,Poppata,,,Materno,,fino alle 02:40
+2026-11-04,03:30,Poppata,,,Materno,,fino alle 04:12
+2026-11-04,04:30,Pannolino,1,1,,,
+2026-11-04,04:40,Poppata,,,Materno,,fino alle 05:30
+2026-11-04,06:00,Poppata,,,Materno,,fino alle 08:00
+2026-11-04,09:00,Pannolino,0,0,,,vuoto
+2026-11-04,09:15,Poppata,,,Materno,,fino alle 09:40
+2026-11-04,10:47,Pannolino,1,0,,,
+2026-11-04,13:15,Pannolino,0,1,,,
+2026-11-04,13:45,Poppata,,,Materno,,fino alle 14:06
+2026-11-04,17:32,Pannolino,1,1,,,
+2026-11-04,17:40,Poppata,,,Materno,,fino alle 18:20
+2026-11-04,19:16,Poppata,,,Materno,,fino alle 19:20
+2026-11-04,20:00,Poppata,,,Artificiale,40,
+2026-11-04,20:54,Poppata,,,Materno,,fino alle 21:10
+2026-11-05,00:00,Pannolino,1,1,,,
+2026-11-05,00:09,Poppata,,,Artificiale,50,fino alle 01:09
+2026-11-05,01:27,Poppata,,,Coccola,,fino alle 01:49
+2026-11-05,02:18,Poppata,,,Coccola,,fino alle 02:24
+2026-11-05,03:45,Pannolino,2,0,,,1 pannolino + 1 addosso
+2026-11-05,03:46,Poppata,,,Coccola,,fino alle 03:53
+2026-11-05,04:55,Poppata,,,Materno,,fino alle 05:26
+2026-11-05,05:40,Poppata,,,Materno,,fino alle 06:05
+2026-11-05,07:00,Pannolino,0,0,,,vuoto
+2026-11-05,07:30,Poppata,,,Artificiale,50,
+2026-11-05,07:57,Poppata,,,Materno,,fino alle 08:15
+2026-11-05,09:40,Pannolino,1,0,,,
+2026-11-05,09:45,Poppata,,,Materno,,fino alle 10:05
+2026-11-05,11:00,Poppata,,,Artificiale,50,
+2026-11-05,14:00,Pannolino,2,1,,,1 pannolino + 1 addosso
+2026-11-05,16:00,Poppata,,,Artificiale,50,
+2026-11-05,17:30,Pannolino,2,1,,,1 pannolino + 1 addosso
+2026-11-05,18:15,Poppata,,,Artificiale,30,
+2026-11-05,19:40,Poppata,,,Artificiale,30,
+2026-11-05,23:30,Pannolino,1,0,,,
+2026-11-05,23:35,Poppata,,,Artificiale,50,
+2026-11-06,01:39,Poppata,,,Coccola,,fino alle 01:41
+2026-11-06,02:30,Pannolino,1,1,,,pipi incerta; seguito da vomito
+2026-11-06,02:30,Vomito,,,,,
+2026-11-06,03:00,Altro,,,,,gas
+2026-11-06,03:30,Poppata,,,Artificiale,50,
+2026-11-06,06:00,Pannolino,1,1,,,
+2026-11-06,06:13,Poppata,,,Artificiale,50,
+2026-11-06,07:08,Poppata,,,Coccola,,fino alle 07:18
+2026-11-06,08:30,Pannolino,1,0,,,
+2026-11-06,08:35,Poppata,,,Artificiale,50,
+2026-11-06,10:00,Poppata,,,Artificiale,30,
+2026-11-06,11:45,Pannolino,1,0,,,
+2026-11-06,12:00,Poppata,,,Artificiale,50,
+2026-11-06,15:48,Poppata,,,Materno,,fino alle 15:55
+2026-11-06,16:30,Pannolino,1,0,,,
+2026-11-06,16:54,Poppata,,,Artificiale,50,
+2026-11-06,19:15,Poppata,,,Artificiale,30,
+2026-11-06,22:30,Pannolino,1,0,,,
+2026-11-07,00:00,Pannolino,1,0,,,
+2026-11-07,00:04,Poppata,,,Materno,50,
+2026-11-07,00:20,Poppata,,,Artificiale,30,
+2026-11-07,03:30,Pannolino,0,0,,,vuoto
+2026-11-07,03:46,Poppata,,,Artificiale,30,
+2026-11-07,03:58,Vomito,,,,,
+2026-11-07,05:00,Pannolino,0,0,,,vuoto
+2026-11-07,05:30,Poppata,,,Materno,20,
+2026-11-07,05:30,Poppata,,,Artificiale,30,
+2026-11-07,08:00,Pannolino,1,1,,,prima pipi poi cacca
+2026-11-07,08:39,Poppata,,,Artificiale,50,
+2026-11-07,10:30,Poppata,,,Artificiale,50,
+2026-11-07,14:00,Pannolino,1,0,,,
+2026-11-07,14:00,Poppata,,,Artificiale,,
+2026-11-07,14:20,Poppata,,,Artificiale,50,
+2026-11-07,16:30,Poppata,,,Artificiale,40,
