@@ -76,12 +76,11 @@
   <section id="p-dashboard" role="tabpanel" aria-labelledby="t-dashboard" hidden>
     <p class="lx-take" id="take">Caricamento…</p>
     <div id="dash">
-    <div class="lx-sec"><h2>Oggi, <span data-b="u-data">…</span></h2><p>Giornata ancora in corso, quindi esclusa dalle medie.</p></div>
+    <div class="lx-sec"><h2>Totali</h2><p>Dal <span data-b="t-dal">·</span>, primo giorno del diario.</p></div>
     <div class="lx-tiles">
-      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="u-poppate">·</span></div>
-      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="u-ml">·</span><span class="lx-s">ml, solo biberon misurati</span></div>
-      <div class="lx-tile" data-c="pann"><span class="lx-k">Pipì</span><span class="lx-n" data-b="u-pipi">·</span></div>
-      <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="u-cacca">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="t-poppate">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="t-litri">·</span><span class="lx-s">litri, solo biberon misurati</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Pannolini</span><span class="lx-n" data-b="t-pannolini">·</span><span class="lx-s">cambiati</span></div>
     </div>
 
     <div class="lx-sec"><h2>Media al giorno</h2><p>Ultimi <span data-b="m-giorni">·</span> giorni completi con registrazioni (al massimo 7), oggi escluso.</p></div>
@@ -92,6 +91,9 @@
       <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="m-cacca">·</span></div>
     </div>
 
+    <div class="lx-sec"><h2>Record</h2><p>Il meglio di ogni categoria, da quando c'è il diario.</p></div>
+    <div class="lx-tiles lx-rec" id="rec"></div>
+
     <div class="lx-sec"><h2>Ora per ora</h2><p>Ultimi 14 giorni. Ogni evento è contato nell'ora in cui è iniziato.</p></div>
     <div class="lx-chips" role="group" aria-label="Misura">
       <button type="button" class="lx-chip lx-on" data-m="poppate" data-c="pop" aria-pressed="true">Poppate</button>
@@ -101,7 +103,6 @@
     </div>
     <div class="lx-grid">
       <div class="lx-card wide"><h2>Mappa giorni e ore</h2><p class="lx-note">Più scuro, più eventi. A destra il totale del giorno. Tocca una cella per il dettaglio.</p><div class="lx-ch" id="heat"></div></div>
-      <div class="lx-card wide"><h2>Quando succede</h2><p class="lx-note">Somma degli ultimi 14 giorni, per fascia oraria.</p><div class="lx-ch" id="prof"></div></div>
     </div>
 
     <div class="lx-sec"><h2>Giorno per giorno</h2><p>Ultimi 14 giorni.</p></div>
@@ -130,6 +131,8 @@
       <dt>ml</dt><dd>Solo i biberon con i millilitri annotati. Le poppate al seno e i biberon senza quantità non hanno ml.</dd>
       <dt>Pipì e cacca</dt><dd>Contate tutte, anche quelle trovate addosso. Un pannolino vuoto non aggiunge nulla.</dd>
       <dt>Medie</dt><dd>Calcolate sugli ultimi 7 giorni completi. Oggi è escluso perché è ancora in corso, e i giorni senza nessuna registrazione non contano.</dd>
+      <dt>Totali</dt><dd>Le poppate sono contate come nei grafici, unendo quelle a meno di un'ora. I litri sono la somma dei biberon con i millilitri annotati.</dd>
+      <dt>Record</dt><dd>Il giorno migliore per ogni misura, oggi compreso. A parità vale il primo. La notte più lunga è la pausa più lunga tra due poppate iniziata tra le 19 e le 4, fino a 12 ore.</dd>
       <dt>Tendenza del peso</dt><dd>La retta che passa più vicino alle pesate degli ultimi 14 giorni, contati dall'ultima pesata. Indica quanti grammi al giorno sta prendendo, in media.</dd>
       <dt>Fuori dai conti delle poppate</dt><dd>Le coccole al seno senza latte e gli episodi di pianto e vomito.</dd>
     </dl></details>

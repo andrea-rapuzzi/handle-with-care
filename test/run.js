@@ -88,6 +88,22 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.strictEqual(tro([pp('2026-11-01', '20:00', 'Materno'), pp('2026-11-02', '20:00', 'Materno')], []).gap5.v, 0); // oltre 12 ore non è una nottata
   ok('trofei: 50 definiti, contatori e date di sblocco');
 
+  // --- totali e record ---
+  const rl = Calcs.fromEvents([pp('2026-11-01', '22:00', 'Materno'), pp('2026-11-01', '22:40', 'Artificiale', 120), pp('2026-11-02', '04:30', 'Artificiale', 90),
+    pp('2026-11-02', '10:00', 'Artificiale', 150), pp('2026-11-02', '13:00', 'Coccola', 500), pn('2026-11-01', '23:00', 1, 0), pn('2026-11-02', '05:00', 1, 1), pn('2026-11-02', '08:00', 1, 0),
+    pn('2026-11-04', '08:00', 0, 0)]);
+  const tt = Calcs.totali(rl);
+  assert.deepStrictEqual(tt, { poppate: 3, ml: 360, pannolini: 4, dal: '2026-11-01' });
+  const rr = Calcs.record(rl, [{ data: '2026-11-01', ora: '09:00', grammi: 3200 }, { data: '2026-11-03', ora: '09:00', grammi: 3300 }]);
+  assert.deepStrictEqual(rr.poppate, { v: 2, data: '2026-11-02' }); // a parità vale il primo, ma l'1/11 ha una poppata sola (le due unite)
+  assert.deepStrictEqual(rr.biberon, { v: 150, data: '2026-11-02', ora: '10:00' }); // la coccola non conta
+  assert.deepStrictEqual(rr.notte, { v: 350, data: '2026-11-01', da: '22:40', a: '04:30' });
+  assert.strictEqual(rr.pipi.v, 2); assert.strictEqual(rr.pipi.data, '2026-11-02'); assert.strictEqual(rr.cacca.v, 1);
+  assert.deepStrictEqual(rr.peso, { v: 3300, data: '2026-11-03' });
+  assert.deepStrictEqual(rr.serie, { v: 4, data: '2026-11-04', dal: '2026-11-01' }); // la pesata del 3 tiene viva la serie
+  assert.ok(Object.values(Calcs.record([], [])).every(v => v === null));
+  ok('totali e record: poppate unite, litri dai biberon, il giorno migliore di ogni categoria');
+
   // --- API ---
   const srv = await start(0); const base = 'http://localhost:' + srv.address().port;
   let cookie = '';

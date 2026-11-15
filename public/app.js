@@ -254,14 +254,12 @@
     $('take').textContent = m.giorni
       ? `Negli ultimi ${m.giorni} giorni completi: in media ${dec(m.poppate)} poppate, ${dec(m.pipi)} pipì e ${dec(m.cacca)} cacche al giorno.`
       : 'Le medie arrivano dopo il primo giorno completo di registrazioni.';
+    renderTotali(D.log); renderRecord(D.log);
     bind('m-giorni', int(m.giorni)); bind('m-poppate', dec(m.poppate)); bind('m-ml', int(m.ml)); bind('m-giorni-ml', int(m.giorni_ml)); bind('m-pipi', dec(m.pipi)); bind('m-cacca', dec(m.cacca));
     const g = D.giornaliero.slice(-GIORNI), days = new Set(g.map(r => r.data));
     const o = D.orario.filter(r => days.has(r.data));
-    ['heat', 'prof'].forEach(id => { $(id).closest('.lx-card').dataset.c = MET[state.metric].k; });
+    $('heat').closest('.lx-card').dataset.c = MET[state.metric].k;
     heat($('heat'), o);
-    const M = MET[state.metric];
-    barChart($('prof'), { rows: Calcs.fascia(o), key: 'ora', stacked: true, totals: false, pad: .2, h: 200, label: `Totale di ${M.label} per ora del giorno`,
-      series: [{ key: state.metric, name: M.label, c: M.c }], xLab: (k, i) => i % 3 === 0 ? String(k).padStart(2, '0') : '', tipTitle: k => `${String(k).padStart(2, '0')}:00 - ${String(k).padStart(2, '0')}:59` });
     const every = g.length > 8 ? 2 : 1;
     const base = { rows: g, key: 'data', xLab: (k, i) => (g.length - 1 - i) % every === 0 ? dayNum(k) : '', tipTitle: dayLong, pad: g.length > 8 ? .2 : .3 };
     barChart($('ch_poppate'), Object.assign({}, base, { stacked: true, totals: true, label: 'Poppate al giorno', series: [{ key: 'poppate_seno', name: 'Materno', c: 0 }, { key: 'poppate_formula', name: 'Artificiale', c: 1 }, { key: 'poppate_miste', name: 'Misto', c: 2 }] }));
@@ -269,6 +267,35 @@
     barChart($('ch_pann'), Object.assign({}, base, { stacked: false, totals: g.length <= 8, label: 'Pipì e cacca al giorno', series: [{ key: 'pipi', name: 'Pipì', c: 3 }, { key: 'cacca', name: 'Cacca', c: 4 }] }));
     renderPeso();
     document.querySelectorAll('.lx-sw[data-c]').forEach(s => { s.style.background = C(+s.dataset.c); });
+  }
+  // Totali e record
+  function renderTotali(log) {
+    const t = Calcs.totali(log);
+    bind('t-dal', t.dal ? dayLong(t.dal) : '·'); bind('t-poppate', int(t.poppate)); bind('t-litri', dec(t.ml / 1000)); bind('t-pannolini', int(t.pannolini));
+  }
+  function renderRecord(log) {
+    const R = Calcs.record(log, state.pesi), quando = r => dayLong(r.data);
+    const ore = v => `${Math.floor(v / 60)} h ${pad(v % 60)}`;
+    const dm = d => fmtD({ day: 'numeric', month: 'long' }, d);
+    const periodo = (a, b) => a.slice(0, 7) === b.slice(0, 7) ? `${dayNum(a)}-${dm(b)}` : `${dm(a)} - ${dm(b)}`;
+    const voci = [
+      ['pop', 'Poppate in un giorno', R.poppate, r => int(r.v), quando],
+      ['pop', 'Latte in un giorno', R.ml, r => int(r.v) + ' ml', quando],
+      ['pop', 'Biberon più grande', R.biberon, r => int(r.v) + ' ml', r => `${quando(r)}, alle ${r.ora}`],
+      ['altro', 'Notte più lunga', R.notte, r => ore(r.v), r => `${quando(r)}, dalle ${r.da} alle ${r.a}`],
+      ['pann', 'Pipì in un giorno', R.pipi, r => int(r.v), quando],
+      ['pann', 'Cacche in un giorno', R.cacca, r => int(r.v), quando],
+      ['peso', 'Peso più alto', R.peso, r => kg(r.v), quando],
+      ['altro', 'Giorni di fila', R.serie, r => int(r.v), r => r.v > 1 ? periodo(r.dal, r.data) : quando(r)]
+    ];
+    const box = $('rec'); box.replaceChildren();
+    voci.forEach(([c, k, r, val, sub]) => {
+      const d = document.createElement('div'); d.className = 'lx-tile'; d.dataset.c = c;
+      const a = document.createElement('span'); a.className = 'lx-k'; a.textContent = k;
+      const n = document.createElement('span'); n.className = 'lx-n'; n.textContent = r ? val(r) : '·';
+      const s = document.createElement('span'); s.className = 'lx-s'; s.textContent = r ? sub(r) : 'ancora nessun dato';
+      d.append(a, n, s); box.append(d);
+    });
   }
   function renderPeso() {
     const tr = Calcs.trendPeso(state.pesi, 14), P = state.pesi;
