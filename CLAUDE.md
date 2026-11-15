@@ -11,7 +11,7 @@ Sito statico (`public/`) + cinque handler (`api/`), online su Netlify. Lingua de
 - Tutta la logica di calcolo è in `public/calcs.js`, usata dal browser e da Node (import CSV, test).
 - Regola poppate: una poppata che inizia entro 60 minuti dall'inizio della precedente si unisce (a catena). Le coccole sono escluse. Le medie usano gli ultimi 7 giorni completi con registrazioni, oggi escluso.
 - Obiettivi del giorno (scheda Registra): `Calcs.obiettivi(grammi)` dall'ultima pesata. Latte dalla tabella per peso (150-200 ml/kg, 8 poppate), interpolata tra le righe e arrotondata a 5 ml; conta solo i ml dei biberon. Pipì: almeno 6 al giorno.
-- Grafici in `public/app.js` con d3 v7 locale, ultimi 14 giorni. Colori da variabili CSS `--c0..--c4`.
+- Grafici in `public/app.js` con d3 v7 locale, ultimi 14 giorni (`GIORNI`); la mappa giorni e ore solo gli ultimi 10 (`GIORNI_MAPPA`). Colori da variabili CSS `--c0..--c4`.
 - Gli handler hanno la forma `(req, res)` di Node e passano da `lib/http.js`, così girano identici in `dev-server.js`. Su Netlify li chiama un'unica funzione, `netlify/functions/diario.js`, che traduce l'evento e imposta `DIARIO_ONLINE` (niente archivio su file, cookie Secure). Un nuovo endpoint va aggiunto anche lì.
 - Header di sicurezza in `lib/headers.js` (server locale e funzione) e ripetuti in `netlify.toml` (file statici): i test controllano che coincidano.
 - Nessun build step, nessuna dipendenza. `npm test` prima di ogni deploy (usa `test/fake-google.js`, non tocca il foglio vero).

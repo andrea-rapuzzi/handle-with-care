@@ -244,7 +244,7 @@
   }
 
   // ---------- scheda Dashboard ----------
-  const GIORNI = 14;
+  const GIORNI = 14, GIORNI_MAPPA = 10;
   function renderDash() {
     const D = state.data;
     $('dash').hidden = !D;
@@ -256,7 +256,7 @@
       : 'Le medie arrivano dopo il primo giorno completo di registrazioni.';
     renderTotali(D.log); renderRecord(D.log);
     bind('m-giorni', int(m.giorni)); bind('m-poppate', dec(m.poppate)); bind('m-ml', int(m.ml)); bind('m-giorni-ml', int(m.giorni_ml)); bind('m-pipi', dec(m.pipi)); bind('m-cacca', dec(m.cacca));
-    const g = D.giornaliero.slice(-GIORNI), days = new Set(g.map(r => r.data));
+    const g = D.giornaliero.slice(-GIORNI), days = new Set(g.slice(-GIORNI_MAPPA).map(r => r.data));
     const o = D.orario.filter(r => days.has(r.data));
     $('heat').closest('.lx-card').dataset.c = MET[state.metric].k;
     heat($('heat'), o);
