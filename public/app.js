@@ -1,5 +1,5 @@
 (function () {
-  const COLORS = [0, 1, 2, 3, 4].map(i => `var(--c${i})`);
+  const COLORS = [0, 1, 2, 3, 4, 5].map(i => `var(--c${i})`);
   const C = i => COLORS[i % COLORS.length];
   const fmtD = (opts, s) => new Intl.DateTimeFormat('it', Object.assign({ timeZone: 'UTC' }, opts)).format(new Date(s + 'T00:00:00Z'));
   const dayShort = s => fmtD({ weekday: 'short', day: 'numeric' }, s);
@@ -11,7 +11,7 @@
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0, k: 'pop' }, ml: { label: 'ml', c: 0, k: 'pop' }, pipi: { label: 'pipì', c: 3, k: 'pann' }, cacca: { label: 'cacca', c: 4, k: 'pann' } };
-  const state = { metric: 'poppate', data: null, pesi: [], openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -81,6 +81,39 @@
       if (r.v > 0) rect.attr('fill', C(M.c)).attr('fill-opacity', .18 + .62 * r.v / max); else rect.attr('fill', 'var(--line)').attr('fill-opacity', .4);
       if (r.v > 0 && cw >= 17) svg.append('text').attr('x', cx + cw / 2).attr('y', cy + ch / 2 + 4).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', 'var(--fg)').attr('pointer-events', 'none').text(int(r.v));
       rect.on('pointermove pointerenter', () => showTip(el, t, cx + cw / 2, `${dayLong(r.d)}, ${String(r.h).padStart(2, '0')}:00`, [{ c: M.c, text: `${int(r.v)} ${M.label}` }])).on('pointerleave', () => { t.style.opacity = 0; });
+    });
+  }
+
+  // Peso: pesate come punti uniti da una linea, più la retta di tendenza tratteggiata
+  function pesoChart(el, pesi, tr) {
+    el.replaceChildren();
+    if (!pesi.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna pesata: registrala dalla scheda Registra.'; el.append(p); return; }
+    const w = Math.max(300, el.clientWidth || 300), h = 230, m = { t: 16, r: 12, b: 24, l: 44 };
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img').attr('aria-label', 'Andamento del peso nel tempo');
+    const T = p => new Date(p.ts * 60000);
+    let [t0, t1] = d3.extent(pesi, T);
+    if (+t1 - +t0 < 2 * 86400000) { t0 = new Date(+t0 - 86400000); t1 = new Date(+t1 + 86400000); }
+    const x = d3.scaleUtc().domain([t0, t1]).range([m.l + 8, w - m.r - 8]);
+    const lo = d3.min(pesi, p => p.grammi), hi = d3.max(pesi, p => p.grammi), padY = Math.max(100, (hi - lo) * .15);
+    const y = d3.scaleLinear().domain([lo - padY, hi + padY]).nice().range([h - m.b, m.t]);
+    const gg = svg.append('g');
+    y.ticks(4).forEach(tk => { gg.append('line').attr('x1', m.l).attr('x2', w - m.r).attr('y1', y(tk)).attr('y2', y(tk)).attr('stroke', 'var(--grid)'); axisText(gg, m.l - 6, y(tk) + 4, n1.format(tk / 1000), 'end'); });
+    axisText(gg, m.l - 6, m.t - 4, 'kg', 'end');
+    x.ticks(Math.max(2, Math.min(6, Math.floor(w / 90)))).forEach(d => axisText(gg, x(d), h - 6, fmtD({ day: 'numeric', month: 'short' }, d.toISOString().slice(0, 10))));
+    if (tr) {
+      const at = t => x(new Date(t * 86400000));
+      svg.append('line').attr('x1', at(tr.da.t)).attr('x2', at(tr.a.t)).attr('y1', y(tr.da.g)).attr('y2', y(tr.a.g))
+        .attr('stroke', 'var(--fg)').attr('stroke-opacity', .55).attr('stroke-width', 2).attr('stroke-dasharray', '6 5').attr('stroke-linecap', 'round');
+    }
+    svg.append('path').attr('d', d3.line().x(p => x(T(p))).y(p => y(p.grammi))(pesi)).attr('fill', 'none').attr('stroke', C(5)).attr('stroke-width', 2.5).attr('stroke-linejoin', 'round');
+    const t = mkTip(el);
+    pesi.forEach((p, i) => {
+      const cx = x(T(p)), cy = y(p.grammi), prev = pesi[i - 1];
+      svg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 4.5).attr('fill', C(5)).attr('stroke', 'var(--panel)').attr('stroke-width', 2);
+      const lines = [{ c: 5, text: kg(p.grammi) }];
+      if (prev) { const d = p.grammi - prev.grammi; lines.push({ text: `${d >= 0 ? '+' : '−'}${int(Math.abs(d))} g dalla pesata prima` }); }
+      svg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 16).attr('fill', 'transparent')
+        .on('pointermove pointerenter', () => showTip(el, t, cx, `${dayLong(p.data)}, ${p.ora}`, lines)).on('pointerleave', () => { t.style.opacity = 0; });
     });
   }
 
@@ -234,21 +267,116 @@
     barChart($('ch_poppate'), Object.assign({}, base, { stacked: true, totals: true, label: 'Poppate al giorno', series: [{ key: 'poppate_seno', name: 'Materno', c: 0 }, { key: 'poppate_formula', name: 'Artificiale', c: 1 }, { key: 'poppate_miste', name: 'Misto', c: 2 }] }));
     barChart($('ch_ml'), Object.assign({}, base, { stacked: true, totals: g.length <= 8, unit: ' ml', label: 'Millilitri al giorno', series: [{ key: 'ml_formula', name: 'Artificiale', c: 1 }, { key: 'ml_seno', name: 'Materno in biberon', c: 0 }] }));
     barChart($('ch_pann'), Object.assign({}, base, { stacked: false, totals: g.length <= 8, label: 'Pipì e cacca al giorno', series: [{ key: 'pipi', name: 'Pipì', c: 3 }, { key: 'cacca', name: 'Cacca', c: 4 }] }));
+    renderPeso();
     document.querySelectorAll('.lx-sw[data-c]').forEach(s => { s.style.background = C(+s.dataset.c); });
   }
+  function renderPeso() {
+    const tr = Calcs.trendPeso(state.pesi, 14), P = state.pesi;
+    const sgn = v => (v >= 0 ? '+' : '−') + int(Math.abs(v));
+    $('peso-trend').textContent = tr
+      ? `Tendenza: ${sgn(tr.g_giorno)} g al giorno, circa ${sgn(tr.g_giorno * 7)} g a settimana (${tr.n} pesate dal ${dayLong(tr.da.data)}).` + (P.length > 1 ? ` Dalla prima pesata: ${sgn(P[P.length - 1].grammi - P[0].grammi)} g.` : '')
+      : P.length ? 'Per la tendenza servono almeno due pesate a un giorno di distanza.' : '';
+    pesoChart($('ch_peso'), P, tr);
+  }
 
-  function render() { renderRegistra(); renderDash(); }
+  // ---------- scheda Trofei ----------
+  const ICONA = { poppate: '🍼', latte: '🥛', notte: '🌙', pannolini: '🧷', peso: '⚖️', diario: '📒' };
+  function avanz(T) {
+    const f = { ml: v => n1.format(v / 1000) + ' L', ml1: v => int(v) + ' ml', g: v => kg(v), min: v => `${Math.floor(v / 60)} h ${pad(v % 60)}`, '%': v => int(v) + '%' }[T.u] || int;
+    return `${f(T.v)} / ${f(T.n)}`;
+  }
+  function renderTrofei() {
+    const L = state.trofei, ok = L.filter(t => t.ok);
+    $('tro-n').textContent = `${ok.length} trofei su ${L.length}`;
+    const ult = ok.slice().sort((a, b) => b.ordine - a.ordine)[0];
+    $('tro-ultimo').textContent = ult ? `L'ultimo: ${ult.nome}, ${dayLong(ult.data)}.` : 'Si sbloccano da soli, registrando.';
+    $('tro-n').closest('.lx-tro-sum').style.setProperty('--bar', 'var(--c3)');
+    bar('tro-bar', ok.length, L.length || 1, null);
+    const box = $('tro-list'); box.replaceChildren();
+    Calcs.CATEGORIE.forEach(c => {
+      const T = L.filter(t => t.cat === c.id); if (!T.length) return;
+      const sec = document.createElement('div'); sec.className = 'lx-sec';
+      const h = document.createElement('h2'); h.textContent = `${c.nome} `; const n = document.createElement('span'); n.className = 'lx-tro-cnt'; n.textContent = `${T.filter(t => t.ok).length}/${T.length}`; h.append(n);
+      sec.append(h);
+      const grid = document.createElement('div'); grid.className = 'lx-tros';
+      T.forEach(t => {
+        const d = document.createElement('div'); d.className = 'lx-tro' + (t.ok ? ' lx-got' : ''); d.dataset.c = c.c;
+        const i = document.createElement('span'); i.className = 'lx-tro-i'; i.setAttribute('aria-hidden', 'true'); i.textContent = t.ok ? ICONA[t.cat] : '🔒';
+        const b = document.createElement('b'); b.textContent = t.ok ? t.nome : '? ? ?';
+        const p = document.createElement('span'); p.className = 'lx-tro-d'; p.textContent = t.desc;
+        d.append(i, b, p);
+        if (t.ok) { const s = document.createElement('span'); s.className = 'lx-tro-q'; s.textContent = 'Sbloccato ' + dayLong(t.data); d.append(s); }
+        else {
+          const q = document.createElement('span'); q.className = 'lx-tro-q'; q.textContent = avanz(t);
+          const br = document.createElement('div'); br.className = 'lx-bar lx-bar-s'; br.setAttribute('aria-hidden', 'true');
+          const f = document.createElement('i'); f.className = 'lx-bar-f'; f.style.width = Math.min(100, t.v / t.n * 100) + '%'; br.append(f);
+          d.append(br, q);
+        }
+        d.setAttribute('aria-label', `${t.ok ? t.nome : 'Trofeo segreto'}. ${t.desc} ${t.ok ? 'Sbloccato ' + dayLong(t.data) : 'Ancora da sbloccare: ' + avanz(t)}.`);
+        grid.append(d);
+      });
+      box.append(sec, grid);
+    });
+  }
+
+  // Popup del trofeo: dopo un salvataggio, mostra uno per uno i trofei che prima non c'erano
+  const coda = [];
+  function festeggia(prima) {
+    state.trofei.filter(t => t.ok && !prima.has(t.id)).forEach(t => coda.push(t));
+    if (coda.length && $('win').hidden) prossimo();
+  }
+  function prossimo() {
+    const t = coda.shift(), w = $('win');
+    if (!t) { w.hidden = true; return; }
+    const c = Calcs.CATEGORIE.find(x => x.id === t.cat);
+    w.dataset.c = c ? c.c : 'pop';
+    $('win-t').textContent = t.nome; $('win-d').textContent = t.desc;
+    w.hidden = false; w.classList.remove('lx-pop'); void w.offsetWidth; w.classList.add('lx-pop');
+    $('win-ok').textContent = coda.length ? `Evviva! (${coda.length} ${coda.length === 1 ? 'altro' : 'altri'})` : 'Evviva!';
+    $('win-ok').focus();
+  }
+  $('win-ok').addEventListener('click', prossimo);
+  $('win').addEventListener('click', e => { if (e.target === $('win')) prossimo(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('win').hidden) prossimo(); });
+  const sbloccati = () => new Set(state.trofei.filter(t => t.ok).map(t => t.id));
+
+  // Trofei: quelli calcolati dai dati, più quelli già registrati nella scheda Trofei (restano anche se i dati cambiano)
+  function calcolaTrofei() {
+    const R = state.registrati || new Map();
+    return Calcs.trofei(state.data ? state.data.log : [], state.pesi).map(t => {
+      if (!R.has(t.id)) return t;
+      return Object.assign(t, { ok: true, data: R.get(t.id) || t.data, v: t.n });
+    });
+  }
+  function render() { state.trofei = calcolaTrofei(); renderRegistra(); renderDash(); renderTrofei(); }
 
   // ---------- dati ----------
   async function load() {
     let evs, pesi;
-    try { [evs, pesi] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; })]); }
+    let reg;
+    try { [evs, pesi, reg] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; }),
+      call('/api/trofei').catch(e => { console.warn('Trofei non caricati:', e.message); return null; })]); }
     catch (e) { $('foot').textContent = 'Dati non aggiornati: ' + e.message; return; }
+    if (reg) state.registrati = new Map(reg.map(t => [t.id, t.data]));
     if (pesi) state.pesi = pesi.map(p => Object.assign({}, p, { ts: Calcs.fromEvents([{ data: p.data, ora: p.ora }])[0].ts })).sort((a, b) => a.ts - b.ts);
     const log = Calcs.fromEvents(evs);
     state.data = log.length ? Calcs.allFromLog(log, adesso().data) : null;
     $('foot').textContent = 'Aggiornato alle ' + new Date().toLocaleTimeString('it', { hour: '2-digit', minute: '2-digit' }) + '. Si aggiorna da solo ogni minuto.';
     render();
+    registra();
+  }
+
+  // Scrive nella scheda Trofei quelli sbloccati che non ci sono ancora. Solo se la scheda è stata letta:
+  // senza sapere cosa c'è già, non si scrive nulla.
+  let registrando = false;
+  async function registra() {
+    if (!state.registrati || registrando) return;
+    const nuovi = state.trofei.filter(t => t.ok && !state.registrati.has(t.id)).map(t => ({ id: t.id, data: t.data }));
+    if (!nuovi.length) return;
+    registrando = true;
+    try { const r = await call('/api/trofei', 'POST', { trofei: nuovi }); state.registrati = new Map(r.trofei.map(t => [t.id, t.data])); }
+    catch (e) { console.warn('Trofei non registrati:', e.message); }
+    finally { registrando = false; }
   }
 
   // ---------- modulo di registrazione ----------
@@ -314,7 +442,8 @@
     const err = $('f-err'); err.hidden = true; $('f-save').disabled = true;
     try {
       await call(ed ? api + '?id=' + encodeURIComponent(ed.id) : api, ed ? 'PUT' : 'POST', b);
-      dlg.close(); toast(ed ? 'Modificato' : 'Registrato'); await load();
+      const prima = sbloccati();
+      dlg.close(); toast(ed ? 'Modificato' : 'Registrato'); await load(); festeggia(prima);
     } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = false; }
   });
   $('f-cancel').addEventListener('click', () => dlg.close());
@@ -349,7 +478,7 @@
   function showTab(name) {
     state.tab = name;
     document.querySelectorAll('.lx-tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('lx-on', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    $('p-registra').hidden = name !== 'registra'; $('p-dashboard').hidden = name !== 'dashboard';
+    ['registra', 'dashboard', 'trofei'].forEach(k => { $('p-' + k).hidden = name !== k; });
     try { localStorage.setItem('diario-tab', name); } catch (e) { /* senza memoria locale va bene lo stesso */ }
     renderDash();
   }
@@ -381,7 +510,7 @@
   function showApp() {
     $('login').hidden = true; $('app').hidden = false;
     let tab = 'registra'; try { tab = localStorage.getItem('diario-tab') || tab; } catch (e) { /* idem */ }
-    showTab(tab === 'dashboard' ? 'dashboard' : 'registra');
+    showTab(['dashboard', 'trofei'].includes(tab) ? tab : 'registra');
     load(); clearInterval(timer); timer = setInterval(load, 60000);
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('app').hidden) load(); });
