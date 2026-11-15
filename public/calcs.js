@@ -116,19 +116,9 @@
     return { giorni: g.length, poppate: m(g, 'poppate'), pipi: m(g, 'pipi'), cacca: m(g, 'cacca'), giorni_ml: conMl.length, ml: m(conMl, 'ml_totali') };
   }
 
-  function fascia(o) {
-    const out = [];
-    for (let h = 0; h < 24; h++) {
-      const r = o.filter(x => Number(x.ora) === h);
-      const s = k => r.reduce((a, x) => a + Number(x[k]), 0);
-      out.push({ ora: h, poppate: s('poppate'), ml: s('ml'), pipi: s('pipi'), cacca: s('cacca') });
-    }
-    return out;
-  }
-
   function allFromLog(log, oggi) {
     const pop = poppate(log), g = giornaliero(log, pop, oggi), o = orario(log, pop, oggi);
-    return { log, poppate: pop, giornaliero: g, orario: o, medie: medie(g), ultimo: g[g.length - 1], fascia: fascia(o) };
+    return { log, poppate: pop, giornaliero: g, orario: o, medie: medie(g), ultimo: g[g.length - 1] };
   }
   const all = (csvText, oggi) => allFromLog(loadLog(parseCSV(csvText)), oggi);
 
@@ -169,6 +159,41 @@
     const b = W.reduce((s, p) => s + (p.t - mt) * (p.g - mg), 0) / W.reduce((s, p) => s + (p.t - mt) ** 2, 0);
     const y = t => mg + b * (t - mt);
     return { g_giorno: b, n: W.length, giorni, da: { data: W[0].data, t: W[0].t, g: y(W[0].t) }, a: { data: W[W.length - 1].data, t: W[W.length - 1].t, g: y(W[W.length - 1].t) } };
+  }
+
+  // ---------- Totali e record ----------
+  // Totali da quando c'è il diario: poppate (unite come in poppate()), ml dei biberon, pannolini cambiati.
+  function totali(log) {
+    const pop = poppate(log || []);
+    return { poppate: pop.length, ml: sum(pop, 'ml_totali'), pannolini: (log || []).filter(r => r.evento === 'Pannolino').length,
+      dal: log && log.length ? log.map(r => r.data).sort()[0] : null };
+  }
+
+  // Il meglio di ogni categoria, con il giorno in cui è successo. A parità vale il primo. Oggi conta.
+  // Notte più lunga: stessa regola del trofeo (prima poppata iniziata tra le 19:00 e le 03:59, al massimo 12 ore).
+  function record(log, pesi) {
+    log = (log || []).slice().sort((a, b) => a.ts - b.ts);
+    const g = giornaliero(log, poppate(log));
+    const best = (rows, f, extra) => rows.reduce((b, r) => { const v = Number(f(r)) || 0; return v > (b ? b.v : 0) ? Object.assign({ v, data: r.data }, extra ? extra(r) : {}) : b; }, null);
+    const day = k => best(g, r => r[k]);
+    const bib = best(log.filter(r => r.evento === 'Poppata' && r.latte !== 'Coccola'), r => r.ml, r => ({ ora: r.ora }));
+    let notte = null, last = null;
+    log.filter(r => r.evento === 'Poppata' && r.latte !== 'Coccola').forEach(r => {
+      if (last && r.ts - last.ts > 60) {
+        const h = Number(last.ora.slice(0, 2)), gap = r.ts - last.ts;
+        if ((h >= 19 || h < 4) && gap <= 720 && gap > (notte ? notte.v : 0)) notte = { v: gap, data: last.data, da: last.ora, a: r.ora };
+      }
+      last = r;
+    });
+    const P = (pesi || []).filter(p => Number(p.grammi) > 0);
+    const giorni = Array.from(new Set(log.map(r => r.data).concat(P.map(p => p.data)))).sort();
+    let serie = null, run = 0;
+    giorni.forEach((d, i) => {
+      run = i && Date.parse(d + 'T00:00:00Z') - Date.parse(giorni[i - 1] + 'T00:00:00Z') === 86400000 ? run + 1 : 1;
+      if (run > (serie ? serie.v : 0)) serie = { v: run, data: d, dal: giorni[i - run + 1] };
+    });
+    return { poppate: day('poppate'), ml: day('ml_totali'), biberon: bib, notte, pipi: day('pipi'), cacca: day('cacca'),
+      peso: best(P, p => p.grammi), serie };
   }
 
   // ---------- Trofei ----------
@@ -286,6 +311,6 @@
     return TROFEI.map(T => { const d = done.get(T.id); return Object.assign({}, T, { ok: !!d, data: d ? d.data : null, ordine: d ? d.i : -1, v: Math.min(st[T.k], T.n) }); });
   }
 
-  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, fascia, all, allFromLog, obiettivi, TABELLA, PIPI_MIN, trendPeso, trofei, TROFEI, CATEGORIE };
+  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, totali, record, all, allFromLog, obiettivi, TABELLA, PIPI_MIN, trendPeso, trofei, TROFEI, CATEGORIE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Calcs = api;
 })(typeof window !== 'undefined' ? window : globalThis);
