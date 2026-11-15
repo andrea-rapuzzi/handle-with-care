@@ -76,13 +76,6 @@
   <section id="p-dashboard" role="tabpanel" aria-labelledby="t-dashboard" hidden>
     <p class="lx-take" id="take">Caricamento…</p>
     <div id="dash">
-    <div class="lx-sec"><h2>Totali</h2><p>Dal <span data-b="t-dal">·</span>, primo giorno del diario.</p></div>
-    <div class="lx-tiles">
-      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="t-poppate">·</span></div>
-      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="t-litri">·</span><span class="lx-s">litri, solo biberon misurati</span></div>
-      <div class="lx-tile" data-c="pann"><span class="lx-k">Pannolini</span><span class="lx-n" data-b="t-pannolini">·</span><span class="lx-s">cambiati</span></div>
-    </div>
-
     <div class="lx-sec"><h2>Media al giorno</h2><p>Ultimi <span data-b="m-giorni">·</span> giorni completi con registrazioni (al massimo 7), oggi escluso.</p></div>
     <div class="lx-tiles">
       <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="m-poppate">·</span></div>
@@ -90,9 +83,6 @@
       <div class="lx-tile" data-c="pann"><span class="lx-k">Pipì</span><span class="lx-n" data-b="m-pipi">·</span></div>
       <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="m-cacca">·</span></div>
     </div>
-
-    <div class="lx-sec"><h2>Record</h2><p>Il meglio di ogni categoria, da quando c'è il diario.</p></div>
-    <div class="lx-tiles lx-rec" id="rec"></div>
 
     <div class="lx-sec"><h2>Ora per ora</h2><p>Ultimi 10 giorni. Ogni evento è contato nell'ora in cui è iniziato.</p></div>
     <div class="lx-chips" role="group" aria-label="Misura">
@@ -124,6 +114,16 @@
         <div class="lx-leg"><span><i class="lx-sw" data-c="5"></i>Pesate</span><span><i class="lx-sw lx-sw-dash"></i>Tendenza</span></div>
         <div class="lx-ch" id="ch_peso"></div></div>
     </div>
+
+    <div class="lx-sec"><h2>Totali</h2><p>Dal <span data-b="t-dal">·</span>, primo giorno del diario.</p></div>
+    <div class="lx-tiles">
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="t-poppate">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="t-litri">·</span><span class="lx-s">litri, solo biberon misurati</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Pannolini</span><span class="lx-n" data-b="t-pannolini">·</span><span class="lx-s">cambiati</span></div>
+    </div>
+
+    <div class="lx-sec"><h2>Record</h2><p>Il meglio di ogni categoria, da quando c'è il diario.</p></div>
+    <div class="lx-tiles lx-rec" id="rec"></div>
 
     <details><summary>Come sono contati i dati</summary><dl>
       <dt>Poppata</dt><dd>Ogni biberon o poppata al seno. Se due poppate iniziano a meno di un'ora una dall'altra, diventano una sola. Una poppata notturna a cavallo della mezzanotte conta nel giorno in cui è iniziata.</dd>
