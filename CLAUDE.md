@@ -15,3 +15,5 @@ Sito statico (`public/`) + quattro handler (`api/`), online su Netlify. Lingua d
 - Gli handler hanno la forma `(req, res)` di Node e passano da `lib/http.js`, così girano identici in `dev-server.js`. Su Netlify li chiama un'unica funzione, `netlify/functions/diario.js`, che traduce l'evento e imposta `DIARIO_ONLINE` (niente archivio su file, cookie Secure). Un nuovo endpoint va aggiunto anche lì.
 - Header di sicurezza in `lib/headers.js` (server locale e funzione) e ripetuti in `netlify.toml` (file statici): i test controllano che coincidano.
 - Nessun build step, nessuna dipendenza. `npm test` prima di ogni deploy (usa `test/fake-google.js`, non tocca il foglio vero).
+- Icone in `public/img/` (+ `public/favicon.ico`), ricavate dall'immagine del piccolo; la stessa foto è l'avatar tondo accanto al titolo. Sono file statici pubblici, fuori dalla password.
+- Stile giocoso: titoli con font arrotondato (`--round`), azzurro dell'icona in `--sky`/`--accent`. I pulsanti di registrazione hanno un colore ciascuno (`data-c` sul pulsante). La barra del latte è `--sky`.

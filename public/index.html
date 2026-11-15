@@ -9,12 +9,19 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#171715" media="(prefers-color-scheme:dark)">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <main class="lx lx-login" id="login" hidden>
-  <h1>Handle With Care</h1>
+  <h1 class="lx-title"><img class="lx-ava" src="img/avatar.jpg" alt="" width="56" height="56">Handle With Care</h1>
   <form id="login-form" class="lx-card">
     <label class="lx-lab" for="pw">Password</label>
     <input class="lx-in" id="pw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
@@ -24,7 +31,7 @@
 </main>
 
 <main class="lx" id="app" hidden>
-  <h1>Handle With Care</h1>
+  <h1 class="lx-title"><img class="lx-ava" src="img/avatar.jpg" alt="" width="56" height="56">Handle With Care</h1>
   <div class="lx-tabs" role="tablist" aria-label="Sezioni">
     <button type="button" class="lx-tab lx-on" role="tab" id="t-registra" data-tab="registra" aria-selected="true" aria-controls="p-registra">Registra</button>
     <button type="button" class="lx-tab" role="tab" id="t-dashboard" data-tab="dashboard" aria-selected="false" aria-controls="p-dashboard">Dashboard</button>
@@ -32,10 +39,10 @@
 
   <section id="p-registra" role="tabpanel" aria-labelledby="t-registra">
     <div class="lx-acts">
-      <button type="button" class="lx-act" data-new="Poppata"><b>Poppata</b><span id="last-poppata">nessuna registrata</span></button>
-      <button type="button" class="lx-act" data-new="Pannolino"><b>Pannolino</b><span id="last-pannolino">nessuno registrato</span></button>
-      <button type="button" class="lx-act lx-act-s" data-new="Altro"><b>Altro</b><span>vomito, pianto, nota</span></button>
-      <button type="button" class="lx-act lx-act-s" data-new="Peso"><b>Peso</b><span id="last-peso">da registrare</span></button>
+      <button type="button" class="lx-act" data-new="Poppata" data-c="pop"><i class="lx-plus" aria-hidden="true">+</i><b>Poppata</b><span id="last-poppata">nessuna registrata</span></button>
+      <button type="button" class="lx-act" data-new="Pannolino" data-c="pann"><i class="lx-plus" aria-hidden="true">+</i><b>Pannolino</b><span id="last-pannolino">nessuno registrato</span></button>
+      <button type="button" class="lx-act lx-act-s" data-new="Altro" data-c="altro"><i class="lx-plus" aria-hidden="true">+</i><b>Altro</b><span>vomito, pianto, nota</span></button>
+      <button type="button" class="lx-act lx-act-s" data-new="Peso" data-c="peso"><i class="lx-plus" aria-hidden="true">+</i><b>Peso</b><span id="last-peso">da registrare</span></button>
     </div>
 
     <div class="lx-sec"><h2>Obiettivi di oggi</h2><p id="ob-base">Registra il peso per avere l'obiettivo di latte.</p></div>
@@ -192,7 +199,6 @@
     <p class="lx-err" id="f-err" role="alert" hidden></p>
     <div class="lx-dbtns">
       <button type="button" class="lx-btn lx-danger" id="f-del" hidden>Elimina</button>
-      <span class="lx-sp"></span>
       <button type="button" class="lx-btn" id="f-cancel">Annulla</button>
       <button type="submit" class="lx-btn lx-primary" id="f-save">Salva</button>
     </div>

@@ -190,7 +190,7 @@
       const giorni = Math.round((Date.parse(now.data) - Date.parse(pe.data)) / 86400000);
       $('ob-base').textContent = `In base all'ultimo peso, ${kg(pe.grammi)} ` + (giorni <= 0 ? 'di oggi.' : giorni === 1 ? 'di ieri.' : `di ${giorni} giorni fa` + (giorni > 7 ? ': conviene ripesarlo.' : '.'));
       $('ob-latte-v').textContent = `${int(ml)} / ${int(ob.ml_min)}-${int(ob.ml_max)} ml`;
-      $('ob-latte').style.setProperty('--bar', 'var(--c1)');
+      $('ob-latte').style.setProperty('--bar', 'var(--sky)');
       bar('ob-latte-bar', ml, ob.ml_max, ob.ml_min);
       L.classList.toggle('lx-ok', ml >= ob.ml_min);
       const stato = ml >= ob.ml_min ? (ml > ob.ml_max ? 'Sopra la fascia indicata.' : 'Obiettivo raggiunto.') : `Mancano almeno ${int(ob.ml_min - ml)} ml.`;
