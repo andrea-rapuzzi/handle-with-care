@@ -61,10 +61,10 @@
 
     <div class="lx-sec"><h2>Oggi, <span data-b="u-data">…</span></h2></div>
     <div class="lx-tiles">
-      <div class="lx-tile"><span class="lx-k">Poppate</span><span class="lx-n" data-b="u-poppate">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="u-ml">·</span><span class="lx-s">ml in biberon</span></div>
-      <div class="lx-tile"><span class="lx-k">Pipì</span><span class="lx-n" data-b="u-pipi">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Cacca</span><span class="lx-n" data-b="u-cacca">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="u-poppate">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="u-ml">·</span><span class="lx-s">ml in biberon</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Pipì</span><span class="lx-n" data-b="u-pipi">·</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="u-cacca">·</span></div>
     </div>
 
     <div class="lx-sec"><h2>Ultime registrazioni</h2><p>Tocca una riga per correggerla o eliminarla.</p></div>
@@ -77,26 +77,26 @@
     <div id="dash">
     <div class="lx-sec"><h2>Oggi, <span data-b="u-data">…</span></h2><p>Giornata ancora in corso, quindi esclusa dalle medie.</p></div>
     <div class="lx-tiles">
-      <div class="lx-tile"><span class="lx-k">Poppate</span><span class="lx-n" data-b="u-poppate">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="u-ml">·</span><span class="lx-s">ml, solo biberon misurati</span></div>
-      <div class="lx-tile"><span class="lx-k">Pipì</span><span class="lx-n" data-b="u-pipi">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Cacca</span><span class="lx-n" data-b="u-cacca">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="u-poppate">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte bevuto</span><span class="lx-n" data-b="u-ml">·</span><span class="lx-s">ml, solo biberon misurati</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Pipì</span><span class="lx-n" data-b="u-pipi">·</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="u-cacca">·</span></div>
     </div>
 
     <div class="lx-sec"><h2>Media al giorno</h2><p>Ultimi <span data-b="m-giorni">·</span> giorni completi con registrazioni (al massimo 7), oggi escluso.</p></div>
     <div class="lx-tiles">
-      <div class="lx-tile"><span class="lx-k">Poppate</span><span class="lx-n" data-b="m-poppate">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Latte artificiale</span><span class="lx-n" data-b="m-ml">·</span><span class="lx-s">ml, media sui <span data-b="m-giorni-ml">·</span> giorni in cui prevale l'artificiale</span></div>
-      <div class="lx-tile"><span class="lx-k">Pipì</span><span class="lx-n" data-b="m-pipi">·</span></div>
-      <div class="lx-tile"><span class="lx-k">Cacca</span><span class="lx-n" data-b="m-cacca">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Poppate</span><span class="lx-n" data-b="m-poppate">·</span></div>
+      <div class="lx-tile" data-c="pop"><span class="lx-k">Latte artificiale</span><span class="lx-n" data-b="m-ml">·</span><span class="lx-s">ml, media sui <span data-b="m-giorni-ml">·</span> giorni in cui prevale l'artificiale</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Pipì</span><span class="lx-n" data-b="m-pipi">·</span></div>
+      <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="m-cacca">·</span></div>
     </div>
 
     <div class="lx-sec"><h2>Ora per ora</h2><p>Ultimi 14 giorni. Ogni evento è contato nell'ora in cui è iniziato.</p></div>
     <div class="lx-chips" role="group" aria-label="Misura">
-      <button type="button" class="lx-chip lx-on" data-m="poppate" aria-pressed="true">Poppate</button>
-      <button type="button" class="lx-chip" data-m="ml" aria-pressed="false">Latte (ml)</button>
-      <button type="button" class="lx-chip" data-m="pipi" aria-pressed="false">Pipì</button>
-      <button type="button" class="lx-chip" data-m="cacca" aria-pressed="false">Cacca</button>
+      <button type="button" class="lx-chip lx-on" data-m="poppate" data-c="pop" aria-pressed="true">Poppate</button>
+      <button type="button" class="lx-chip" data-m="ml" data-c="pop" aria-pressed="false">Latte (ml)</button>
+      <button type="button" class="lx-chip" data-m="pipi" data-c="pann" aria-pressed="false">Pipì</button>
+      <button type="button" class="lx-chip" data-m="cacca" data-c="pann" aria-pressed="false">Cacca</button>
     </div>
     <div class="lx-grid">
       <div class="lx-card wide"><h2>Mappa giorni e ore</h2><p class="lx-note">Più scuro, più eventi. A destra il totale del giorno. Tocca una cella per il dettaglio.</p><div class="lx-ch" id="heat"></div></div>
@@ -105,13 +105,13 @@
 
     <div class="lx-sec"><h2>Giorno per giorno</h2><p>Ultimi 14 giorni.</p></div>
     <div class="lx-grid">
-      <div class="lx-card"><h2>Poppate</h2><p class="lx-note">Poppate ravvicinate, a meno di un'ora, contano come una sola.</p>
+      <div class="lx-card" data-c="pop"><h2>Poppate</h2><p class="lx-note">Poppate ravvicinate, a meno di un'ora, contano come una sola.</p>
         <div class="lx-leg"><span><i class="lx-sw" data-c="0"></i>Latte materno</span><span><i class="lx-sw" data-c="1"></i>Artificiale</span><span><i class="lx-sw" data-c="2"></i>Misto</span></div>
         <div class="lx-ch" id="ch_poppate"></div></div>
-      <div class="lx-card"><h2>Latte bevuto</h2><p class="lx-note">Millilitri dei biberon. Il seno non ha ml, quindi non è contato.</p>
+      <div class="lx-card" data-c="pop"><h2>Latte bevuto</h2><p class="lx-note">Millilitri dei biberon. Il seno non ha ml, quindi non è contato.</p>
         <div class="lx-leg"><span><i class="lx-sw" data-c="1"></i>Artificiale</span><span><i class="lx-sw" data-c="0"></i>Materno in biberon</span></div>
         <div class="lx-ch" id="ch_ml"></div></div>
-      <div class="lx-card"><h2>Pannolini</h2><p class="lx-note">Pipì e cacca, comprese quelle trovate addosso.</p>
+      <div class="lx-card" data-c="pann"><h2>Pannolini</h2><p class="lx-note">Pipì e cacca, comprese quelle trovate addosso.</p>
         <div class="lx-leg"><span><i class="lx-sw" data-c="3"></i>Pipì</span><span><i class="lx-sw" data-c="4"></i>Cacca</span></div>
         <div class="lx-ch" id="ch_pann"></div></div>
     </div>
@@ -145,6 +145,7 @@
 
 <dialog id="dlg" class="lx-dlg" aria-labelledby="dlg-t">
   <form id="f" novalidate>
+    <button type="button" class="lx-grab" id="dlg-grab" aria-label="Chiudi"><i></i></button>
     <h2 id="dlg-t" tabindex="-1" autofocus>Nuova registrazione</h2>
 
     <div class="lx-row2">

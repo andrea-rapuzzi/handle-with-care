@@ -16,4 +16,5 @@ Sito statico (`public/`) + quattro handler (`api/`), online su Netlify. Lingua d
 - Header di sicurezza in `lib/headers.js` (server locale e funzione) e ripetuti in `netlify.toml` (file statici): i test controllano che coincidano.
 - Nessun build step, nessuna dipendenza. `npm test` prima di ogni deploy (usa `test/fake-google.js`, non tocca il foglio vero).
 - Icone in `public/img/` (+ `public/favicon.ico`), ricavate dall'immagine del piccolo; la stessa foto è l'avatar tondo accanto al titolo. Sono file statici pubblici, fuori dalla password.
-- Stile giocoso: titoli con font arrotondato (`--round`), azzurro dell'icona in `--sky`/`--accent`. I pulsanti di registrazione hanno un colore ciascuno (`data-c` sul pulsante). La barra del latte è `--sky`.
+- Stile giocoso: titoli con font arrotondato (`--round`), azzurro dell'icona in `--sky`/`--accent`. Un colore per tipo di evento con `data-c` (`pop` azzurro, `pann` giallo, `altro` rosa, `peso` verde) che imposta `--t --a --e --pi --s --si`: lo usano i pulsanti di registrazione, il modulo (`#dlg`, impostato in `openForm`), i riquadri e le card della Dashboard. Grafici: `--c0` materno azzurro, `--c1` artificiale rosa, `--c3` pipì giallo. La barra del latte è `--sky`.
+- La maniglia del modulo (`#dlg-grab`) chiude se trascinata in giù oltre 100 px, con un colpo veloce o con un tocco; solo su schermi stretti.
