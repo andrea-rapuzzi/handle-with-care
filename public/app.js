@@ -10,7 +10,7 @@
   const int = v => n0.format(+v), dec = v => n1.format(+v);
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
-  const MET = { poppate: { label: 'poppate', c: 0 }, ml: { label: 'ml', c: 1 }, pipi: { label: 'pipì', c: 3 }, cacca: { label: 'cacca', c: 4 } };
+  const MET = { poppate: { label: 'poppate', c: 0, k: 'pop' }, ml: { label: 'ml', c: 0, k: 'pop' }, pipi: { label: 'pipì', c: 3, k: 'pann' }, cacca: { label: 'cacca', c: 4, k: 'pann' } };
   const state = { metric: 'poppate', data: null, pesi: [], openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
@@ -190,7 +190,7 @@
       const giorni = Math.round((Date.parse(now.data) - Date.parse(pe.data)) / 86400000);
       $('ob-base').textContent = `In base all'ultimo peso, ${kg(pe.grammi)} ` + (giorni <= 0 ? 'di oggi.' : giorni === 1 ? 'di ieri.' : `di ${giorni} giorni fa` + (giorni > 7 ? ': conviene ripesarlo.' : '.'));
       $('ob-latte-v').textContent = `${int(ml)} / ${int(ob.ml_min)}-${int(ob.ml_max)} ml`;
-      $('ob-latte').style.setProperty('--bar', 'var(--c1)');
+      $('ob-latte').style.setProperty('--bar', 'var(--sky)');
       bar('ob-latte-bar', ml, ob.ml_max, ob.ml_min);
       L.classList.toggle('lx-ok', ml >= ob.ml_min);
       const stato = ml >= ob.ml_min ? (ml > ob.ml_max ? 'Sopra la fascia indicata.' : 'Obiettivo raggiunto.') : `Mancano almeno ${int(ob.ml_min - ml)} ml.`;
@@ -224,6 +224,7 @@
     bind('m-giorni', int(m.giorni)); bind('m-poppate', dec(m.poppate)); bind('m-ml', int(m.ml)); bind('m-giorni-ml', int(m.giorni_ml)); bind('m-pipi', dec(m.pipi)); bind('m-cacca', dec(m.cacca));
     const g = D.giornaliero.slice(-GIORNI), days = new Set(g.map(r => r.data));
     const o = D.orario.filter(r => days.has(r.data));
+    ['heat', 'prof'].forEach(id => { $(id).closest('.lx-card').dataset.c = MET[state.metric].k; });
     heat($('heat'), o);
     const M = MET[state.metric];
     barChart($('prof'), { rows: Calcs.fascia(o), key: 'ora', stacked: true, totals: false, pad: .2, h: 200, label: `Totale di ${M.label} per ora del giorno`,
@@ -274,6 +275,7 @@
     const group = kind === 'Poppata' || kind === 'Pannolino' || kind === 'Peso' ? kind : 'Altro';
     state.editing = ev || null; state.group = group;
     form.querySelectorAll('[data-ev]').forEach(d => { d.hidden = d.dataset.ev !== group; });
+    dlg.dataset.c = { Poppata: 'pop', Pannolino: 'pann', Peso: 'peso', Altro: 'altro' }[group];
     $('dlg-t').textContent = (ev ? 'Modifica: ' : '') + { Poppata: 'Poppata', Pannolino: 'Pannolino', Peso: 'Peso', Altro: 'Altro evento' }[group];
     const now = adesso();
     $('f-data').value = ev ? ev.data : now.data; $('f-ora').value = ev ? ev.ora : now.ora;
@@ -316,6 +318,24 @@
     } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = false; }
   });
   $('f-cancel').addEventListener('click', () => dlg.close());
+  // Maniglia del foglio: trascinata in giù oltre una soglia (o con un colpo veloce) chiude, toccata chiude, altrimenti torna su.
+  (function grab() {
+    const h = $('dlg-grab'); let y0 = null, t0 = 0, dy = 0;
+    const set = v => { dlg.style.transform = v ? `translateY(${v}px)` : ''; };
+    h.addEventListener('pointerdown', e => { y0 = e.clientY; t0 = e.timeStamp; dy = 0; h.setPointerCapture(e.pointerId); dlg.classList.remove('lx-anim'); dlg.classList.add('lx-drag'); });
+    h.addEventListener('pointermove', e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); set(dy); });
+    const end = e => {
+      if (y0 == null) return;
+      const fast = dy > 30 && dy / Math.max(1, e.timeStamp - t0) > .5;
+      y0 = null; dlg.classList.remove('lx-drag'); dlg.classList.add('lx-anim');
+      if (e.type === 'pointercancel' || (dy > 4 && dy < 100 && !fast)) { set(0); return; }
+      set(dlg.offsetHeight);
+      setTimeout(() => dlg.close(), matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : 200);
+    };
+    h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+    h.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dlg.close(); } });
+    dlg.addEventListener('close', () => { dlg.classList.remove('lx-anim', 'lx-drag'); set(0); });
+  })();
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
   $('f-del').addEventListener('click', async () => {
     const ed = state.editing; if (!ed || !confirm(`Eliminare "${descr(ed)}" delle ${ed.ora}?`)) return;
