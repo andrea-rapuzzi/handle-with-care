@@ -1,5 +1,6 @@
 // Adattatore Netlify: traduce l'evento della funzione nella coppia (req, res) usata dagli handler di api/.
-// netlify.toml manda qui tutte le richieste a /api/*.
+// netlify.toml manda qui tutte le richieste a /api/*. Il file non può chiamarsi api.js: nel pacchetto
+// della funzione entrerebbe in conflitto con la cartella api/ e Netlify non riuscirebbe a caricarla.
 process.env.DIARIO_ONLINE = '1'; // in produzione: niente archivio su file, cookie sempre Secure
 
 const HEADERS = require('../../lib/headers');

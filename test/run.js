@@ -172,12 +172,12 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   G.srv.close();
 
   // --- adattatore Netlify: stessi handler, chiamati con l'evento della funzione ---
-  const { handler } = require('../netlify/functions/api');
+  const { handler } = require('../netlify/functions/diario');
   const SEC = require('../lib/headers');
   const ev = (p, method, body, extra) => handler(Object.assign({ path: p, httpMethod: method || 'GET', headers: { Cookie: nfCookie }, rawQuery: '', body: body ? JSON.stringify(body) : null, isBase64Encoded: false }, extra));
   let nfCookie = '';
   assert.strictEqual((await ev('/api/events')).statusCode, 401);
-  assert.strictEqual((await ev('/.netlify/functions/api')).statusCode, 404);
+  assert.strictEqual((await ev('/.netlify/functions/diario')).statusCode, 404);
   assert.strictEqual((await ev('/api/constructor')).statusCode, 404);
   const nl = await ev('/api/session', 'POST', { password: 'prova-123' });
   assert.strictEqual(nl.statusCode, 200); assert.ok(/; Secure/.test(nl.headers['Set-Cookie']));

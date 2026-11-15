@@ -14,7 +14,7 @@ Telefono  ->  /api/events (Netlify)  ->  Google Sheet, scheda Log
 - `api/session.js`: login, logout, stato della sessione.
 - `api/events.js`: elenco, creazione, modifica, eliminazione degli eventi. `?format=csv` per l'export.
 - `api/import.js`: import di un CSV con le colonne del vecchio foglio.
-- `netlify/functions/api.js`: l'unica funzione Netlify, instrada `/api/*` ai tre file di `api/`. `netlify.toml`: cartella pubblicata, instradamento, header.
+- `netlify/functions/diario.js`: l'unica funzione Netlify, instrada `/api/*` ai tre file di `api/`. `netlify.toml`: cartella pubblicata, instradamento, header.
 - `lib/`: `auth.js` (password e cookie firmato), `sheets.js` (lettura e scrittura del Google Sheet), `store.js` (sceglie tra foglio e file JSON locale), `events.js` (validazione, CSV), `http.js`, `headers.js` (header di sicurezza).
 - `data/log-iniziale.csv`: copia dei dati del foglio al 7 novembre, usata dai test. Non è servita dal sito.
 - `dev-server.js`, `test/run.js`, `test/fake-google.js`: server locale, test, finto Google per i test.
