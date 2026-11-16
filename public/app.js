@@ -410,6 +410,22 @@
   const dlg = $('dlg'), form = $('f');
   const radio = (name, v) => { if (v === undefined) { const c = form.querySelector(`input[name="${name}"]:checked`); return c ? c.value : ''; } form.querySelectorAll(`input[name="${name}"]`).forEach(i => { i.checked = i.value === String(v); }); };
   const mlVisible = () => { $('ml-box').hidden = radio('latte') === 'Coccola'; };
+  // Salva si accende solo quando c'è il dato che serve: ml per l'artificiale, grammi per il peso.
+  // Il materno senza ml resta valido (è il seno), la coccola non ha ml.
+  const inRange = el => el.value !== '' && Number(el.value) >= Number(el.min) && Number(el.value) <= Number(el.max);
+  function canSave() {
+    if (state.group === 'Peso') return inRange($('f-grammi'));
+    if (state.group === 'Poppata' && radio('latte') === 'Artificiale') return inRange($('f-ml')) && Number($('f-ml').value) > 0;
+    return true;
+  }
+  // la dose scelta resta evidenziata finché il campo ml ha quel valore
+  function syncForm() {
+    $('ml-chips').querySelectorAll('.lx-chip').forEach(c => {
+      const on = $('f-ml').value !== '' && Number(c.dataset.v) === Number($('f-ml').value);
+      c.classList.toggle('lx-sel', on); c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('f-save').disabled = !canSave();
+  }
 
   function mlChips() {
     const freq = new Map();
@@ -419,9 +435,9 @@
     vals = Array.from(new Set(vals.concat([100, 120]))); // 100 e 120 sempre a portata di dito
     const box = $('ml-chips'); box.replaceChildren();
     vals.sort((a, b) => a - b).forEach(v => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'lx-chip'; b.textContent = int(v);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'lx-chip'; b.dataset.v = v; b.textContent = int(v);
       b.setAttribute('aria-label', `${v} millilitri`);
-      b.addEventListener('click', () => { $('f-ml').value = v; });
+      b.addEventListener('click', () => { $('f-ml').value = v; syncForm(); });
       box.append(b);
     });
   }
@@ -444,7 +460,7 @@
     const lastPe = state.pesi[state.pesi.length - 1];
     $('f-grammi').value = ev && ev.grammi ? ev.grammi : ''; $('f-grammi').placeholder = lastPe ? `ultimo: ${lastPe.grammi}` : 'es. 3450'; grammiKg();
     mlChips(); mlVisible();
-    $('f-err').hidden = true; $('f-del').hidden = !ev; $('f-save').disabled = false;
+    $('f-err').hidden = true; $('f-del').hidden = !ev; syncForm();
     // Il fuoco va sul titolo, non sul primo campo: su iOS il fuoco sulla data aprirebbe subito il selettore.
     // Data, ora e gli altri campi si aprono solo quando li tocchi.
     dlg.showModal();
@@ -453,7 +469,8 @@
 
   function grammiKg() { const v = Number($('f-grammi').value); $('f-grammi-kg').textContent = v >= 500 ? `= ${kg(v)}` : 'Ad esempio 3450 per 3,45 kg.'; }
   $('f-grammi').addEventListener('input', grammiKg);
-  form.addEventListener('change', mlVisible);
+  form.addEventListener('change', () => { mlVisible(); syncForm(); });
+  form.addEventListener('input', syncForm);
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const g = state.group, ed = state.editing;
@@ -471,7 +488,7 @@
       await call(ed ? api + '?id=' + encodeURIComponent(ed.id) : api, ed ? 'PUT' : 'POST', b);
       const prima = sbloccati();
       dlg.close(); toast(ed ? 'Modificato' : 'Registrato'); await load(); festeggia(prima);
-    } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = false; }
+    } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = !canSave(); }
   });
   $('f-cancel').addEventListener('click', () => dlg.close());
   // Maniglia del foglio: trascinata in giù oltre una soglia (o con un colpo veloce) chiude, toccata chiude, altrimenti torna su.

@@ -70,7 +70,7 @@ button,input,select{font:inherit;color:inherit}
 .lx-err{margin:8px 0 0;color:#b3261e;font-size:.9rem}
 @media (prefers-color-scheme:dark){.lx-err{color:#f2b8b5}}
 
-.lx-tabs{display:flex;gap:4px;padding:4px;margin:10px 0 18px;background:var(--line);border-radius:12px}
+.lx-tabs{display:flex;gap:4px;padding:4px;margin:16px 0 26px;background:var(--line);border-radius:12px}
 .lx-tab{flex:1;min-height:42px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;font-weight:600}
 .lx-tab.lx-on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 
@@ -143,6 +143,10 @@ button,input,select{font:inherit;color:inherit}
 .lx-dlg[data-c]{background:var(--t);border:2px solid var(--e);border-bottom:0}
 .lx-dlg[data-c] .lx-in,.lx-dlg[data-c] .lx-seg span{background:var(--panel);border-color:var(--e)}
 .lx-dlg[data-c] .lx-chip{border-color:var(--e)}
+/* dose preimpostata scelta: grigio più scuro */
+.lx-dlg[data-c] .lx-chip.lx-sel{background:var(--line);border-color:var(--muted);font-weight:700}
+/* Salva spento finché manca il dato: grigio, senza il colore del tipo */
+.lx-dlg[data-c] .lx-primary:disabled{background:var(--line);color:var(--muted);border-color:var(--line);box-shadow:none;opacity:1}
 .lx-dlg[data-c] .lx-in:focus{border-color:var(--a)}
 .lx-dlg[data-c] .lx-seg input:checked + span,.lx-dlg[data-c] .lx-primary{background:var(--s);color:var(--si);border-color:var(--s)}
 .lx-dlg[data-c] .lx-lab,.lx-dlg[data-c] .lx-seg legend,.lx-dlg[data-c] .lx-note{color:var(--fg);opacity:.75}
