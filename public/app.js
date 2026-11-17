@@ -467,6 +467,7 @@
     // Data, ora e gli altri campi si aprono solo quando li tocchi.
     dlg.showModal();
     $('dlg-t').focus({ preventScroll: true });
+    entra();
   }
 
   function grammiKg() { const v = Number($('f-grammi').value); $('f-grammi-kg').textContent = v >= 500 ? `= ${kg(v)}` : 'Ad esempio 3450 per 3,45 kg.'; }
@@ -493,6 +494,15 @@
     } catch (x) { err.textContent = x.message; err.hidden = false; $('f-save').disabled = !canSave(); }
   });
   $('f-cancel').addEventListener('click', () => dlg.close());
+  // Entrata del modulo: su telefono sale dal basso (si chiude trascinandolo in giù), su schermo largo compare al centro.
+  // Animazione Web (WAAPI): non tocca lo stile in linea usato dalla maniglia.
+  function entra() {
+    if (!dlg.animate || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    const largo = matchMedia('(min-width:560px)').matches;
+    dlg.animate(largo ? [{ opacity: 0, transform: 'scale(.96)' }, { opacity: 1, transform: 'none' }] : [{ transform: 'translateY(100%)' }, { transform: 'none' }],
+      { duration: largo ? 200 : 280, easing: largo ? 'cubic-bezier(.23,1,.32,1)' : 'cubic-bezier(.32,.72,0,1)' });
+    try { dlg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease', pseudoElement: '::backdrop' }); } catch (e) { /* browser senza animazione dello sfondo */ }
+  }
   // Maniglia del foglio: trascinata in giù oltre una soglia (o con un colpo veloce) chiude, toccata chiude, altrimenti torna su.
   (function grab() {
     const h = $('dlg-grab'); let y0 = null, t0 = 0, dy = 0;
@@ -525,6 +535,10 @@
     state.tab = name;
     document.querySelectorAll('.lx-tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('lx-on', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); });
     ['registra', 'dashboard', 'trofei'].forEach(k => { $('p-' + k).hidden = name !== k; });
+    // La pillola bianca scorre sotto il tab scelto; la prima volta si posiziona senza animazione
+    const i = ['registra', 'dashboard', 'trofei'].indexOf(name), tabs = document.querySelector('.lx-tabs');
+    $('tab-pill').style.transform = `translateX(calc(${i} * (100% + 4px)))`;
+    if (!tabs.classList.contains('lx-ready')) requestAnimationFrame(() => requestAnimationFrame(() => tabs.classList.add('lx-ready')));
     try { localStorage.setItem('diario-tab', name); } catch (e) { /* senza memoria locale va bene lo stesso */ }
     renderDash();
   }
@@ -549,6 +563,9 @@
     } catch (x) { msg.textContent = x.message; }
   });
   $('logout').addEventListener('click', async () => { try { await call('/api/session', 'DELETE'); } finally { showLogin(); } });
+
+  // Su iOS :active scatta solo se la pagina ascolta il tocco
+  document.addEventListener('touchstart', () => {}, { passive: true });
 
   // ---------- accesso ----------
   let timer;
