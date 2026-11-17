@@ -76,12 +76,16 @@
     return [Math.min(...ds), Math.max(...ds, Number.isFinite(o) ? o : -Infinity)];
   };
 
+  // Raggruppa una volta sola invece di rifiltrare tutto il log per ogni giorno (e ogni ora): con mesi di dati fa la differenza
+  const perChiave = (a, k) => { const m = new Map(); a.forEach(x => { const c = k(x); if (!m.has(c)) m.set(c, []); m.get(c).push(x); }); return m; };
+
   function giornaliero(log, pop, oggi) {
     if (!log.length) return [];
     let [d, end] = range(log, oggi); const out = [];
+    const LD = perChiave(log, r => r.data), PD = perChiave(pop, p => p.data);
     while (d <= end) {
       const iso = new Date(d).toISOString().slice(0, 10);
-      const L = log.filter(r => r.data === iso), P = pop.filter(p => p.data === iso), pan = L.filter(r => r.evento === 'Pannolino');
+      const L = LD.get(iso) || [], P = PD.get(iso) || [], pan = L.filter(r => r.evento === 'Pannolino');
       out.push({ data: iso, eventi: L.length, poppate: P.length,
         poppate_seno: P.filter(p => p.tipo === 'seno').length, poppate_formula: P.filter(p => p.tipo === 'formula').length, poppate_miste: P.filter(p => p.tipo === 'misto').length,
         ml_formula: sum(P, 'ml_formula'), ml_seno: sum(P, 'ml_seno_misurati'), ml_totali: sum(P, 'ml_totali'),
@@ -96,11 +100,11 @@
     if (!log.length) return [];
     let [d, end] = range(log, oggi); const out = [];
     const hr = s => Number(String(s).slice(0, 2));
+    const PH = perChiave(pop, p => p.data + ' ' + hr(p.ora_inizio)), NH = perChiave(log.filter(r => r.evento === 'Pannolino'), r => r.data + ' ' + hr(r.ora));
     while (d <= end) {
       const iso = new Date(d).toISOString().slice(0, 10);
       for (let h = 0; h < 24; h++) {
-        const P = pop.filter(p => p.data === iso && hr(p.ora_inizio) === h);
-        const pan = log.filter(r => r.data === iso && r.evento === 'Pannolino' && hr(r.ora) === h);
+        const P = PH.get(iso + ' ' + h) || [], pan = NH.get(iso + ' ' + h) || [];
         out.push({ data: iso, ora: h, poppate: P.length, ml: sum(P, 'ml_totali'), pipi: sum(pan, 'pipi'), cacca: sum(pan, 'cacca') });
       }
       d += 86400000;

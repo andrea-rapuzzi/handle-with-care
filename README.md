@@ -5,7 +5,7 @@ Mini sito per registrare poppate e pannolini dal telefono e vederli in una dashb
 ```
 Telefono  ->  /api/events (Netlify)  ->  Google Sheet, scheda Log
                     |
-              pagina: scheda Registra + scheda Dashboard (calcoli e grafici nel browser)
+              pagina: scheda Today + scheda Dashboard (calcoli e grafici nel browser)
 ```
 
 ## File
