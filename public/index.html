@@ -30,10 +30,10 @@
   </form>
 </main>
 
-<main class="lx" id="app" hidden>
+<main class="lx lx-loading" id="app" hidden aria-busy="true">
   <h1 class="lx-title"><img class="lx-ava" src="img/avatar.jpg" alt="" width="56" height="56">Handle With Care</h1>
   <div class="lx-tabs" role="tablist" aria-label="Sezioni">
-    <button type="button" class="lx-tab lx-on" role="tab" id="t-registra" data-tab="registra" aria-selected="true" aria-controls="p-registra">Registra</button>
+    <button type="button" class="lx-tab lx-on" role="tab" id="t-registra" data-tab="registra" aria-selected="true" aria-controls="p-registra">Today</button>
     <button type="button" class="lx-tab" role="tab" id="t-dashboard" data-tab="dashboard" aria-selected="false" aria-controls="p-dashboard">Dashboard</button>
     <button type="button" class="lx-tab" role="tab" id="t-trofei" data-tab="trofei" aria-selected="false" aria-controls="p-trofei">Trofei</button>
   </div>
@@ -69,7 +69,7 @@
     </div>
 
     <div class="lx-sec"><h2>Ultime registrazioni</h2><p>Tocca una riga per correggerla o eliminarla.</p></div>
-    <div class="lx-card lx-list" id="list"><p class="lx-fail">Ancora nessuna registrazione.</p></div>
+    <div class="lx-card lx-list" id="list"><i class="lx-sk"></i><i class="lx-sk"></i><i class="lx-sk"></i><i class="lx-sk"></i></div>
     <button type="button" class="lx-btn" id="more" hidden>Mostra le precedenti</button>
   </section>
 

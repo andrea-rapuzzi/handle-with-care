@@ -211,3 +211,14 @@ button,input,select{font:inherit;color:inherit}
 @keyframes lx-in{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 @keyframes lx-cup{0%{transform:scale(.4) rotate(-20deg)}50%{transform:scale(1.2) rotate(8deg)}75%{transform:scale(.95) rotate(-4deg)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.lx-win.lx-pop .lx-win-box,.lx-win.lx-pop .lx-win-cup{animation:none}}
+
+/* Primo caricamento: avatar che pulsa e scheletri al posto dei numeri */
+.lx-sk{display:block;height:44px;margin:10px 0;border-radius:10px}
+.lx-loading .lx-ava{animation:lx-pulse 1.2s ease-in-out infinite}
+.lx-loading .lx-n,.lx-loading .lx-act span[id],.lx-loading .lx-goal-v,.lx-loading .lx-goal-n,.lx-loading #ob-base,.lx-loading [data-b],.lx-loading #take,.lx-loading #tro-n,.lx-loading #tro-ultimo{color:transparent;border-radius:8px}
+.lx-loading .lx-n,.lx-loading .lx-goal-v{min-width:3ch;display:inline-block}.lx-loading .lx-goal-v{min-width:5ch}.lx-loading .lx-bar-m{display:none}
+.lx-sk,.lx-loading .lx-n,.lx-loading .lx-act span[id],.lx-loading .lx-goal-v,.lx-loading [data-b],.lx-loading .lx-ch,.lx-loading #rec{background:linear-gradient(90deg,var(--grid) 0%,var(--line) 50%,var(--grid) 100%) 0 0/200% 100%;animation:lx-shim 1.4s linear infinite}
+.lx-loading .lx-ch,.lx-loading #rec{min-height:160px;border-radius:12px}
+@keyframes lx-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 2px var(--sky),0 4px 10px rgba(28,167,224,.3)}50%{transform:scale(1.08);box-shadow:0 0 0 6px var(--sky),0 6px 18px rgba(28,167,224,.45)}}
+@keyframes lx-shim{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.lx-loading .lx-ava,.lx-sk,.lx-loading .lx-n,.lx-loading .lx-act span[id],.lx-loading .lx-goal-v,.lx-loading [data-b],.lx-loading .lx-ch,.lx-loading #rec{animation:none}}

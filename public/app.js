@@ -11,7 +11,7 @@
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0, k: 'pop' }, ml: { label: 'ml', c: 0, k: 'pop' }, pipi: { label: 'pipì', c: 3, k: 'pann' }, cacca: { label: 'cacca', c: 4, k: 'pann' } };
-  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 14, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 3, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -87,7 +87,7 @@
   // Peso: pesate come punti uniti da una linea, più la retta di tendenza tratteggiata
   function pesoChart(el, pesi, tr) {
     el.replaceChildren();
-    if (!pesi.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna pesata: registrala dalla scheda Registra.'; el.append(p); return; }
+    if (!pesi.length) { const p = document.createElement('p'); p.className = 'lx-fail'; p.textContent = 'Ancora nessuna pesata: registrala dalla scheda Today.'; el.append(p); return; }
     const w = Math.max(300, el.clientWidth || 300), h = 230, m = { t: 16, r: 12, b: 24, l: 44 };
     const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img').attr('aria-label', 'Andamento del peso nel tempo');
     const T = p => new Date(p.ts * 60000);
@@ -160,7 +160,7 @@
   }
   const breve = e => e.evento === 'Poppata' ? [e.latte.toLowerCase(), e.ml > 0 ? `${int(e.ml)} ml` : ''].filter(Boolean).join(', ') : descr(e).replace('Pannolino: ', '');
 
-  // ---------- scheda Registra ----------
+  // ---------- scheda Today (id interno: registra) ----------
   function renderRegistra() {
     const D = state.data, now = adesso();
     const log = D ? D.log : [];
@@ -383,15 +383,17 @@
     let reg;
     try { [evs, pesi, reg] = await Promise.all([call('/api/events'), call('/api/pesi').catch(e => { console.warn('Pesate non caricate:', e.message); return null; }),
       call('/api/trofei').catch(e => { console.warn('Trofei non caricati:', e.message); return null; })]); }
-    catch (e) { $('foot').textContent = 'Dati non aggiornati: ' + e.message; return; }
+    catch (e) { $('foot').textContent = 'Dati non aggiornati: ' + e.message; caricato(); return; }
     if (reg) state.registrati = new Map(reg.map(t => [t.id, t.data]));
     if (pesi) state.pesi = pesi.map(p => Object.assign({}, p, { ts: Calcs.fromEvents([{ data: p.data, ora: p.ora }])[0].ts })).sort((a, b) => a.ts - b.ts);
     const log = Calcs.fromEvents(evs);
     state.data = log.length ? Calcs.allFromLog(log, adesso().data) : null;
     $('foot').textContent = 'Aggiornato alle ' + new Date().toLocaleTimeString('it', { hour: '2-digit', minute: '2-digit' }) + '. Si aggiorna da solo ogni minuto.';
-    render();
+    render(); caricato();
     registra();
   }
+  // Scheletro e avatar che pulsa solo al primo caricamento: gli aggiornamenti di ogni minuto non fanno sfarfallare la pagina
+  function caricato() { const a = $('app'); a.classList.remove('lx-loading'); a.removeAttribute('aria-busy'); }
 
   // Scrive nella scheda Trofei quelli sbloccati che non ci sono ancora. Solo se la scheda è stata letta:
   // senza sapere cosa c'è già, non si scrive nulla.
@@ -516,7 +518,7 @@
     catch (x) { const err = $('f-err'); err.textContent = x.message; err.hidden = false; }
   });
   document.querySelectorAll('[data-new]').forEach(b => b.addEventListener('click', () => openForm(b.dataset.new)));
-  $('more').addEventListener('click', () => { state.shown += 14; renderRegistra(); });
+  $('more').addEventListener('click', () => { state.shown += 7; renderRegistra(); });
 
   // ---------- schede ----------
   function showTab(name) {
