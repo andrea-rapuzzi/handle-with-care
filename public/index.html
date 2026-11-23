@@ -85,15 +85,21 @@
       <div class="lx-tile" data-c="pann"><span class="lx-k">Cacca</span><span class="lx-n" data-b="m-cacca">·</span></div>
     </div>
 
-    <div class="lx-sec"><h2>Ora per ora</h2><p>Ultimi 10 giorni. Ogni evento è contato nell'ora in cui è iniziato.</p></div>
+    <div class="lx-sec"><h2>Latte durante la giornata</h2><p>Millilitri dei biberon sommati man mano, da mezzanotte.</p></div>
+    <div class="lx-card" data-c="pop">
+      <div class="lx-leg"><span><i class="lx-sw lx-ln" data-l="oggi"></i>Oggi</span><span><i class="lx-sw lx-ln" data-l="ieri"></i>Ieri</span><span><i class="lx-sw lx-ln" data-l="media"></i><span data-b="l-media">Media</span></span></div>
+      <div class="lx-ch" id="ch_cum"></div>
+    </div>
+
+    <div class="lx-sec"><h2>Ora per ora</h2><p>Ultimi 7 giorni. Ogni evento è contato nell'ora in cui è iniziato.</p></div>
     <div class="lx-chips" role="group" aria-label="Misura">
-      <button type="button" class="lx-chip lx-on" data-m="poppate" data-c="pop" aria-pressed="true">Poppate</button>
-      <button type="button" class="lx-chip" data-m="ml" data-c="pop" aria-pressed="false">Latte (ml)</button>
+      <button type="button" class="lx-chip lx-on" data-m="ml" data-c="pop" aria-pressed="true">Latte (ml)</button>
+      <button type="button" class="lx-chip" data-m="poppate" data-c="pop" aria-pressed="false">Poppate</button>
       <button type="button" class="lx-chip" data-m="pipi" data-c="pann" aria-pressed="false">Pipì</button>
       <button type="button" class="lx-chip" data-m="cacca" data-c="pann" aria-pressed="false">Cacca</button>
     </div>
     <div class="lx-grid">
-      <div class="lx-card wide"><h2>Mappa giorni e ore</h2><p class="lx-note">Più scuro, più eventi. A destra il totale del giorno. Tocca una cella per il dettaglio.</p><div class="lx-ch" id="heat"></div></div>
+      <div class="lx-card wide"><h2>Mappa giorni e ore</h2><p class="lx-note">Più scuro, più eventi. Tocca una cella per il dettaglio.</p><div class="lx-ch" id="heat"></div></div>
     </div>
 
     <div class="lx-sec"><h2>Giorno per giorno</h2><p>Ultimi 14 giorni.</p></div>

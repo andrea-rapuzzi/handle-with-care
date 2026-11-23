@@ -113,16 +113,39 @@
   }
 
   // Medie sugli ultimi 7 giorni completi: escluso l'ultimo (in corso) e i giorni senza nessuna registrazione
+  const completi = g => g.slice(0, -1).filter(r => r.eventi > 0).slice(-7);
+  // giorni in cui prevale l'artificiale: solo lì i ml dei biberon dicono quanto ha bevuto
+  const conLatte = g => g.filter(r => (Number(r.poppate_formula) + Number(r.poppate_miste)) * 2 >= Number(r.poppate));
   function medie(g) {
-    g = g.slice(0, -1).filter(r => r.eventi > 0).slice(-7);
+    g = completi(g);
     const m = (rows, k) => rows.length ? rows.reduce((s, r) => s + Number(r[k]), 0) / rows.length : 0;
-    const conMl = g.filter(r => (Number(r.poppate_formula) + Number(r.poppate_miste)) * 2 >= Number(r.poppate));
+    const conMl = conLatte(g);
     return { giorni: g.length, poppate: m(g, 'poppate'), pipi: m(g, 'pipi'), cacca: m(g, 'cacca'), giorni_ml: conMl.length, ml: m(conMl, 'ml_totali') };
+  }
+
+  // Latte bevuto nella giornata, cumulato: un valore ogni PASSO minuti, da mezzanotte (indice 0) a 24:00.
+  // Contano i ml dei biberon, nell'ora in cui ciascuno è stato registrato.
+  const PASSO = 5;
+  function cumulato(log, data) {
+    const b = log.filter(r => r.data === data && r.evento === 'Poppata' && r.latte !== 'Coccola' && r.ml > 0)
+      .map(r => { const t = String(r.ora).split(':').map(Number); return { min: t[0] * 60 + t[1], ml: Number(r.ml) }; });
+    const out = [];
+    for (let t = 0; t <= 1440; t += PASSO) out.push(b.reduce((s, x) => x.min <= t ? s + x.ml : s, 0));
+    return out;
+  }
+  // Oggi, ieri e la media dei giorni usati per la media del latte (stessa scelta di medie(): l'ultimo punto coincide)
+  function latteGiornata(log, g) {
+    if (!g.length) return null;
+    const oggi = g[g.length - 1].data;
+    const ieri = new Date(Date.parse(oggi + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
+    const giorni = conLatte(completi(g)).map(r => r.data), cs = giorni.map(d => cumulato(log, d));
+    const media = cs.length ? cs[0].map((_, i) => cs.reduce((s, c) => s + c[i], 0) / cs.length) : null;
+    return { passo: PASSO, data: oggi, oggi: cumulato(log, oggi), ieri: cumulato(log, ieri), media, giorni_media: giorni.length };
   }
 
   function allFromLog(log, oggi) {
     const pop = poppate(log), g = giornaliero(log, pop, oggi), o = orario(log, pop, oggi);
-    return { log, poppate: pop, giornaliero: g, orario: o, medie: medie(g), ultimo: g[g.length - 1] };
+    return { log, poppate: pop, giornaliero: g, orario: o, medie: medie(g), ultimo: g[g.length - 1], latte: latteGiornata(log, g) };
   }
   const all = (csvText, oggi) => allFromLog(loadLog(parseCSV(csvText)), oggi);
 
@@ -315,6 +338,6 @@
     return TROFEI.map(T => { const d = done.get(T.id); return Object.assign({}, T, { ok: !!d, data: d ? d.data : null, ordine: d ? d.i : -1, v: Math.min(st[T.k], T.n) }); });
   }
 
-  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, totali, record, all, allFromLog, obiettivi, TABELLA, PIPI_MIN, trendPeso, trofei, TROFEI, CATEGORIE };
+  const api = { parseCSV, loadLog, fromEvents, poppate, giornaliero, orario, medie, cumulato, latteGiornata, totali, record, all, allFromLog, obiettivi, TABELLA, PIPI_MIN, trendPeso, trofei, TROFEI, CATEGORIE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Calcs = api;
 })(typeof window !== 'undefined' ? window : globalThis);
