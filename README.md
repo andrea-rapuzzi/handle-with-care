@@ -27,6 +27,8 @@ npm run dev     # http://localhost:8000, password "Enrico", dati in .data/eventi
 npm test
 ```
 
+Per provare con i dati veri: `npm run scarica` chiede indirizzo e password del sito online e copia eventi, pesate e trofei in `.data/` (sola lettura, il foglio non viene toccato; i file locali precedenti finiscono in una copia di riserva). Poi ricarica la pagina.
+
 ## Il foglio come database
 
 Il sito legge e scrive la scheda **Log** del foglio. Le colonne A:H restano quelle di sempre (Data, Ora, Evento, Pipì, Cacca, Latte, ml, Note). Il sito usa in più la colonna **I** per un ID di riga, che gli serve per modificare ed eliminare.

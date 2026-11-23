@@ -59,6 +59,17 @@ const ok = (name) => { n++; console.log('  ok  ' + name); };
   assert.ok(P.clean({ data: '2026-11-31', ora: '10:00', grammi: 3450 }).error);
   assert.deepStrictEqual(P.clean({ data: '2026-11-15', ora: '10:00', grammi: '3450', nota: ' nudo ' }).p, { data: '2026-11-15', ora: '10:00', grammi: 3450, nota: 'nudo' });
   ok('obiettivi: identici alla tabella sulle righe, interpolati in mezzo; validazione del peso');
+  // --- latte cumulato nella giornata ---
+  const lg = [{ data: '2026-11-20', ora: '10:00', evento: 'Poppata', latte: 'Artificiale', ml: 90 }, { data: '2026-11-20', ora: '13:32', evento: 'Poppata', latte: 'Artificiale', ml: 60 },
+    { data: '2026-11-20', ora: '14:00', evento: 'Poppata', latte: 'Coccola', ml: 0 }, { data: '2026-11-21', ora: '08:00', evento: 'Poppata', latte: 'Artificiale', ml: 120 },
+    { data: '2026-11-22', ora: '09:00', evento: 'Poppata', latte: 'Materno', ml: 0 }, { data: '2026-11-23', ora: '07:00', evento: 'Poppata', latte: 'Artificiale', ml: 70 }];
+  const lgA = Calcs.allFromLog(Calcs.fromEvents(lg), '2026-11-23'), L = lgA.latte;
+  assert.strictEqual(L.oggi.length, 1440 / L.passo + 1);
+  const cu = Calcs.cumulato(lgA.log, '2026-11-20');
+  assert.strictEqual(cu[600 / 5], 90); assert.strictEqual(cu[595 / 5], 0); assert.strictEqual(cu[810 / 5], 90); assert.strictEqual(cu[815 / 5], 150); assert.strictEqual(cu[288], 150);
+  assert.strictEqual(L.oggi[288], 70); assert.strictEqual(L.ieri[288], 0); // ieri solo seno: nessun ml
+  assert.strictEqual(L.giorni_media, 2); assert.strictEqual(L.media[288], lgA.medie.ml); assert.strictEqual(L.media[288], 135);
+  ok('latte cumulato: oggi, ieri e media, che finisce sulla media del giorno');
 
   // --- tendenza del peso ---
   assert.strictEqual(Calcs.trendPeso([{ data: '2026-11-01', ora: '08:00', grammi: 3000 }]), null);

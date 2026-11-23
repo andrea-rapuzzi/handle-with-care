@@ -35,6 +35,9 @@ h2{font-size:1.05rem;font-weight:600;margin:0}
 .lx-note{margin:2px 0 10px;color:var(--muted);font-size:.85rem}
 .lx-leg{display:flex;flex-wrap:wrap;gap:8px 16px;margin:0 0 10px;font-size:.85rem;color:var(--muted)}
 .lx-sw{display:inline-block;width:.7rem;height:.7rem;border-radius:2px;margin-right:.35rem;vertical-align:-1px}
+.lx-ln{width:1.1rem;height:0;border-radius:0;border-top:3px solid var(--c0);vertical-align:3px}
+.lx-ln[data-l="ieri"]{opacity:.35}
+.lx-ln[data-l="media"]{border-top-color:var(--muted);border-top-width:2px}
 .lx-sw-dash{height:0;border-top:2px dashed var(--fg);opacity:.6;border-radius:0;vertical-align:3px}
 .lx-ch{position:relative;min-height:200px}.lx-ch svg{display:block;overflow:visible}
 .lx-tt{position:absolute;top:0;left:0;pointer-events:none;opacity:0;background:var(--pop);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px 10px;font-size:.85rem;white-space:nowrap;z-index:2}

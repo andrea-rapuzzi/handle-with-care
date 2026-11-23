@@ -11,7 +11,7 @@
   const n3 = new Intl.NumberFormat('it', { maximumFractionDigits: 3 });
   const kg = g => n3.format(g / 1000) + ' kg';
   const MET = { poppate: { label: 'poppate', c: 0, k: 'pop' }, ml: { label: 'ml', c: 0, k: 'pop' }, pipi: { label: 'pipì', c: 3, k: 'pann' }, cacca: { label: 'cacca', c: 4, k: 'pann' } };
-  const state = { metric: 'poppate', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 3, tab: 'registra', editing: null, group: null };
+  const state = { metric: 'ml', data: null, pesi: [], trofei: [], registrati: null, openDays: new Set(), shown: 3, tab: 'registra', editing: null, group: null };
   const $ = id => document.getElementById(id);
 
   function axisText(g, x, y, txt, anchor) {
@@ -66,14 +66,12 @@
     const M = MET[state.metric];
     const rows = orario.map(r => ({ d: r.data, h: +r.ora, v: +r[state.metric] }));
     const days = Array.from(new Set(rows.map(r => r.d)));
-    const w = Math.max(300, el.clientWidth || 300), m = { t: 20, r: 40, b: 4, l: 46 };
+    const w = Math.max(300, el.clientWidth || 300), m = { t: 20, r: 2, b: 4, l: 46 };
     const cw = (w - m.l - m.r) / 24, ch = 26, h = m.t + days.length * ch + m.b;
     const max = d3.max(rows, r => r.v) || 1;
     const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img').attr('aria-label', `Mappa di ${M.label} per giorno e ora`);
     for (let hr = 0; hr < 24; hr += 3) axisText(svg, m.l + hr * cw + cw / 2, m.t - 6, String(hr).padStart(2, '0'));
     days.forEach((d, i) => axisText(svg, m.l - 8, m.t + i * ch + ch / 2 + 4, dayShort(d), 'end'));
-    axisText(svg, w - 2, m.t - 6, 'Tot.', 'end');
-    days.forEach((d, i) => axisText(svg, w - 2, m.t + i * ch + ch / 2 + 4, int(d3.sum(rows.filter(r => r.d === d), r => r.v)), 'end').attr('font-weight', 600).attr('fill', 'var(--fg)'));
     const t = mkTip(el);
     rows.forEach(r => {
       const i = days.indexOf(r.d), cx = m.l + r.h * cw, cy = m.t + i * ch;
@@ -82,6 +80,41 @@
       if (r.v > 0 && cw >= 17) svg.append('text').attr('x', cx + cw / 2).attr('y', cy + ch / 2 + 4).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', 'var(--fg)').attr('pointer-events', 'none').text(int(r.v));
       rect.on('pointermove pointerenter', () => showTip(el, t, cx + cw / 2, `${dayLong(r.d)}, ${String(r.h).padStart(2, '0')}:00`, [{ c: M.c, text: `${int(r.v)} ${M.label}` }])).on('pointerleave', () => { t.style.opacity = 0; });
     });
+  }
+
+  const mediaN = n => `Media ${int(n)} ${n === 1 ? 'giorno' : 'giorni'}`;
+  // Latte cumulato: oggi (fino a adesso), ieri e media, sull'asse delle 24 ore
+  function cumChart(el, L, nowMin) {
+    el.replaceChildren();
+    const w = Math.max(300, el.clientWidth || 300), h = 220, m = { t: 14, r: 8, b: 24, l: 40 };
+    const P = L.passo, cut = Math.floor(nowMin / P) + 1;
+    const series = [
+      { name: 'Ieri', v: L.ieri, stroke: 'var(--c0)', op: .35, wd: 2.5 },
+      L.media && { name: mediaN(L.giorni_media), v: L.media, ogni: 60, stroke: 'var(--muted)', op: 1, wd: 2 },
+      { name: 'Oggi', v: L.oggi.slice(0, cut), stroke: 'var(--c0)', op: 1, wd: 3 }].filter(Boolean);
+    const x = d3.scaleLinear().domain([0, 1440]).range([m.l, w - m.r]);
+    const y = d3.scaleLinear().domain([0, d3.max(series, s => d3.max(s.v)) || 100]).nice().range([h - m.b, m.t]);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img').attr('aria-label', 'Latte bevuto cumulato: oggi, ieri e media');
+    y.ticks(4).forEach(tk => { svg.append('line').attr('x1', m.l).attr('x2', w - m.r).attr('y1', y(tk)).attr('y2', y(tk)).attr('stroke', 'var(--grid)'); axisText(svg, m.l - 6, y(tk) + 4, int(tk), 'end'); });
+    for (let hr = 0; hr <= 24; hr += 3) axisText(svg, x(hr * 60), h - 6, pad(hr % 24), hr === 0 ? 'start' : hr === 24 ? 'end' : 'middle');
+    // Linea continua: unisce i momenti in cui il totale cresce (ogni biberon), più inizio e fine, senza gradini.
+    // La media cresce a piccoli passi (i biberon di tutti i giorni): basta un punto ogni ora.
+    const punti = (v, ogni) => v.map((val, i) => [i * P, val]).filter((p, i) => i === 0 || i === v.length - 1 || (ogni ? (i * P) % ogni === 0 : v[i] !== v[i - 1]));
+    const line = d3.line().x(p => x(p[0])).y(p => y(p[1])).curve(d3.curveMonotoneX);
+    series.forEach(s => svg.append('path').attr('d', line(punti(s.v, s.ogni))).attr('fill', 'none').attr('stroke', s.stroke).attr('stroke-opacity', s.op).attr('stroke-width', s.wd).attr('stroke-linejoin', 'round'));
+    if (cut > 0 && cut <= L.oggi.length) {
+      const last = L.oggi[cut - 1];
+      svg.append('circle').attr('cx', x((cut - 1) * P)).attr('cy', y(last)).attr('r', 4).attr('fill', 'var(--c0)');
+      axisText(svg, x((cut - 1) * P), y(last) - 9, `${int(last)} ml`).attr('fill', 'var(--fg)').attr('font-weight', 600).attr('stroke', 'var(--panel)').attr('stroke-width', 4).attr('paint-order', 'stroke');
+    }
+    const t = mkTip(el), guide = svg.append('line').attr('y1', m.t).attr('y2', h - m.b).attr('stroke', 'var(--muted)').attr('stroke-opacity', 0);
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', w - m.l - m.r).attr('height', h - m.t - m.b).attr('fill', 'transparent')
+      .on('pointermove pointerenter', ev => {
+        const px = d3.pointer(ev)[0], i = Math.max(0, Math.min(L.oggi.length - 1, Math.round(x.invert(px) / P))), mn = i * P;
+        guide.attr('x1', x(mn)).attr('x2', x(mn)).attr('stroke-opacity', .5);
+        showTip(el, t, px * el.clientWidth / w, `Fino alle ${pad(Math.floor(mn / 60) % 24)}:${pad(mn % 60)}`, series.slice().reverse().filter(s => i < s.v.length).map(s => ({ text: `${s.name}: ${int(s.v[i])} ml` })));
+      })
+      .on('pointerleave', () => { t.style.opacity = 0; guide.attr('stroke-opacity', 0); });
   }
 
   // Peso: pesate come punti uniti da una linea, più la retta di tendenza tratteggiata
@@ -244,18 +277,20 @@
   }
 
   // ---------- scheda Dashboard ----------
-  const GIORNI = 14, GIORNI_MAPPA = 10;
+  const GIORNI = 14, GIORNI_MAPPA = 7;
   function renderDash() {
     const D = state.data;
     $('dash').hidden = !D;
-    if (!D) { $('take').textContent = 'Ancora nessun dato: registra il primo evento.'; return; }
+    if (!D) { $('take').hidden = false; $('take').textContent = 'Ancora nessun dato: registra il primo evento.'; return; }
     if ($('p-dashboard').hidden) return;
     const m = D.medie;
-    $('take').textContent = m.giorni
-      ? `Negli ultimi ${m.giorni} giorni completi: in media ${dec(m.poppate)} poppate, ${dec(m.pipi)} pipì e ${dec(m.cacca)} cacche al giorno.`
-      : 'Le medie arrivano dopo il primo giorno completo di registrazioni.';
+    $('take').hidden = !!m.giorni;
+    $('take').textContent = m.giorni ? '' : 'Le medie arrivano dopo il primo giorno completo di registrazioni.';
     renderTotali(D.log); renderRecord(D.log);
     bind('m-giorni', int(m.giorni)); bind('m-poppate', dec(m.poppate)); bind('m-ml', int(m.ml)); bind('m-giorni-ml', int(m.giorni_ml)); bind('m-pipi', dec(m.pipi)); bind('m-cacca', dec(m.cacca));
+    const L = D.latte, now = adesso();
+    bind('l-media', L ? mediaN(L.giorni_media) : 'Media');
+    if (L) cumChart($('ch_cum'), L, L.data === now.data ? now.ts % 1440 : 1440);
     const g = D.giornaliero.slice(-GIORNI), days = new Set(g.slice(-GIORNI_MAPPA).map(r => r.data));
     const o = D.orario.filter(r => days.has(r.data));
     $('heat').closest('.lx-card').dataset.c = MET[state.metric].k;
