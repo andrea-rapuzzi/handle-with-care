@@ -165,8 +165,8 @@ button,input,select{font:inherit;color:inherit}
 .lx-seg input:checked + span{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
 .lx-seg input:focus-visible + span{outline:2px solid var(--c0);outline-offset:2px}
 /* rotella dei ml: tacche ogni 10, quella al centro è il valore */
-.lx-mlval{display:block;min-height:2.2rem;text-align:center;font-family:var(--round);font-weight:800;font-size:2rem;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--s)}
-.lx-mlval small{font-size:1rem;font-weight:700;color:var(--muted)}
+.lx-mlval{display:block;min-height:1.6rem;text-align:center;font-family:var(--round);font-weight:800;font-size:1.35rem;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--s)}
+.lx-mlval small{font-size:.85rem;font-weight:700;color:var(--muted)}
 .lx-wheel{--tick:16px;position:relative;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x;cursor:grab;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
 .lx-wheel::-webkit-scrollbar{display:none}
