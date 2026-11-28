@@ -143,7 +143,7 @@ button,input,select{font:inherit;color:inherit}
 .lx-dlg::backdrop{background:rgba(0,0,0,.45)}
 /* il modulo prende il colore del tipo di evento */
 .lx-dlg[data-c]{background:var(--t);border:2px solid var(--e);border-bottom:0}
-.lx-dlg[data-c] .lx-in,.lx-dlg[data-c] .lx-seg span{background:var(--panel);border-color:var(--e)}
+.lx-dlg[data-c] .lx-in,.lx-dlg[data-c] .lx-seg span,.lx-dlg[data-c] .lx-wheel-w{background:var(--panel);border-color:var(--e)}
 .lx-dlg[data-c] .lx-chip{border-color:var(--e)}
 /* dose preimpostata scelta: grigio più scuro */
 .lx-dlg[data-c] .lx-chip.lx-sel{background:var(--line);border-color:var(--muted);font-weight:700}
@@ -167,10 +167,10 @@ button,input,select{font:inherit;color:inherit}
 /* rotella dei ml: tacche ogni 10, quella al centro è il valore */
 .lx-mlval{display:block;min-height:1.6rem;text-align:center;font-family:var(--round);font-weight:800;font-size:1.35rem;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--s)}
 .lx-mlval small{font-size:.85rem;font-weight:700;color:var(--muted)}
-.lx-wheel{--tick:16px;position:relative;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x;cursor:grab;
+.lx-wheel{--tick:16px;position:relative;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x;cursor:grab;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
 .lx-wheel::-webkit-scrollbar{display:none}
-.lx-wheel:focus-visible{outline:2px solid var(--c0);outline-offset:2px}
+.lx-wheel-w:has(.lx-wheel:focus-visible){outline:2px solid var(--c0);outline-offset:2px}
 .lx-wheel-t{display:flex;align-items:flex-start;height:64px;width:max-content}
 .lx-wheel-t > i{flex:0 0 auto}
 .lx-wheel-t > b{position:relative;flex:0 0 var(--tick);height:100%;scroll-snap-align:center;font-weight:400}
@@ -178,8 +178,8 @@ button,input,select{font:inherit;color:inherit}
 .lx-wheel-t > b[data-n]::before{height:28px;opacity:.9}
 .lx-wheel-t > b[data-n]::after{content:attr(data-n);position:absolute;left:50%;top:34px;transform:translateX(-50%);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 /* l'indicatore centrale sta sopra la rotella, fuori dalla maschera */
-.lx-wheel-w{position:relative;margin-top:6px}
-.lx-wheel-w::after{content:"";position:absolute;left:50%;top:1px;width:4px;height:34px;margin-left:-2px;border-radius:0 0 3px 3px;background:var(--s);pointer-events:none}
+.lx-wheel-w{position:relative;margin-top:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden}
+.lx-wheel-w::after{content:"";position:absolute;left:50%;top:0;width:4px;height:34px;margin-left:-2px;border-radius:0 0 3px 3px;background:var(--s);pointer-events:none}
 /* Annulla e Salva restano visibili in fondo anche quando il modulo scorre */
 .lx-dbtns{position:sticky;bottom:0;display:flex;gap:8px;margin:20px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--t,var(--panel));border-top:1px solid var(--e,var(--line))}
 .lx-dbtns .lx-primary{flex:1}
