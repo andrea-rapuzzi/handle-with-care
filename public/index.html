@@ -200,11 +200,12 @@
         <label><input type="radio" name="latte" value="Coccola"><span>Coccola</span></label>
       </fieldset>
       <div id="ml-box">
-        <label class="lx-lab" for="f-ml">Millilitri (vuoto se al seno)</label>
-        <div class="lx-mlrow">
-          <input class="lx-in" id="f-ml" type="number" inputmode="numeric" min="0" max="500" step="5" placeholder="ml">
-          <div class="lx-chips" id="ml-chips"></div>
-        </div>
+        <div class="lx-lab" id="ml-lab">Millilitri (0 se al seno)</div>
+        <output class="lx-mlval" id="ml-val" for="ml-wheel" aria-hidden="true">80 ml</output>
+        <div class="lx-wheel-w"><div class="lx-wheel" id="ml-wheel" role="slider" tabindex="0" aria-labelledby="ml-lab" aria-valuemin="0" aria-valuemax="300" aria-valuenow="80">
+          <div class="lx-wheel-t" id="ml-track"></div>
+        </div></div>
+        <input type="hidden" id="f-ml">
       </div>
     </div>
 

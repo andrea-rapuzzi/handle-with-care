@@ -446,37 +446,78 @@
   // ---------- modulo di registrazione ----------
   const dlg = $('dlg'), form = $('f');
   const radio = (name, v) => { if (v === undefined) { const c = form.querySelector(`input[name="${name}"]:checked`); return c ? c.value : ''; } form.querySelectorAll(`input[name="${name}"]`).forEach(i => { i.checked = i.value === String(v); }); };
-  const mlVisible = () => { $('ml-box').hidden = radio('latte') === 'Coccola'; };
+  const mlVisible = () => { const was = $('ml-box').hidden; $('ml-box').hidden = radio('latte') === 'Coccola'; if (was && !$('ml-box').hidden) wheel.place(); };
   // Salva si accende solo quando c'è il dato che serve: ml per l'artificiale, grammi per il peso.
   // Il materno senza ml resta valido (è il seno), la coccola non ha ml.
   const inRange = el => el.value !== '' && Number(el.value) >= Number(el.min) && Number(el.value) <= Number(el.max);
   function canSave() {
     if (state.group === 'Peso') return inRange($('f-grammi'));
-    if (state.group === 'Poppata' && radio('latte') === 'Artificiale') return inRange($('f-ml')) && Number($('f-ml').value) > 0;
+    if (state.group === 'Poppata' && radio('latte') === 'Artificiale') return Number($('f-ml').value) > 0;
     return true;
   }
-  // la dose scelta resta evidenziata finché il campo ml ha quel valore
-  function syncForm() {
-    $('ml-chips').querySelectorAll('.lx-chip').forEach(c => {
-      const on = $('f-ml').value !== '' && Number(c.dataset.v) === Number($('f-ml').value);
-      c.classList.toggle('lx-sel', on); c.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    $('f-save').disabled = !canSave();
-  }
+  function syncForm() { $('f-save').disabled = !canSave(); }
 
-  function mlChips() {
-    const freq = new Map();
-    (state.data ? state.data.log : []).forEach(r => { if (r.ml > 0) freq.set(r.ml, (freq.get(r.ml) || 0) + 1); });
-    let vals = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]);
-    if (vals.length < 3) vals = [30, 60, 90];
-    vals = Array.from(new Set(vals.concat([100, 120]))); // 100 e 120 sempre a portata di dito
-    const box = $('ml-chips'); box.replaceChildren();
-    vals.sort((a, b) => a - b).forEach(v => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'lx-chip'; b.dataset.v = v; b.textContent = int(v);
-      b.setAttribute('aria-label', `${v} millilitri`);
-      b.addEventListener('click', () => { $('f-ml').value = v; syncForm(); });
-      box.append(b);
+  // Rotella dei ml: una tacca ogni 10 ml, il valore è quella sotto l'indicatore centrale.
+  // Scorre in modo nativo (inerzia e aggancio con scroll-snap); il valore cambia solo quando la muove una persona,
+  // così un valore fuori passo (75, da un import) resta com'è finché non la tocchi.
+  const ML_STEP = 10, ML_MAX = 300, ML_TICK = 16;
+  const wheel = (function () {
+    const el = $('ml-wheel'), track = $('ml-track'), out = $('ml-val'), inp = $('f-ml');
+    let max = 0, mano = false;
+    const vuoto = () => radio('latte') === 'Materno' ? 'al seno' : '0 ml';
+    function show(v) {
+      out.innerHTML = v > 0 ? `${int(v)} <small>ml</small>` : `<small>${vuoto()}</small>`;
+      el.setAttribute('aria-valuenow', v); el.setAttribute('aria-valuetext', v > 0 ? `${v} millilitri` : vuoto());
+    }
+    function build(top) {
+      if (top === max) return;
+      max = top; const kids = [document.createElement('i')];
+      for (let v = 0; v <= max; v += ML_STEP) { const b = document.createElement('b'); if (v % 50 === 0) b.dataset.n = v; kids.push(b); }
+      kids.push(document.createElement('i'));
+      track.replaceChildren(...kids); el.setAttribute('aria-valuemax', max);
+    }
+    // posiziona la rotella sul valore del campo; va chiamata quando è visibile (dentro un dialog chiuso non ha misure)
+    function place(smooth) {
+      const pad = Math.max(0, (el.clientWidth - ML_TICK) / 2);
+      track.firstChild.style.width = track.lastChild.style.width = pad + 'px';
+      const behavior = smooth && !matchMedia('(prefers-reduced-motion:reduce)').matches ? 'smooth' : 'auto';
+      el.scrollTo({ left: Number(inp.value || 0) / ML_STEP * ML_TICK, behavior });
+    }
+    function set(v, smooth) {
+      v = Math.max(0, Math.round(Number(v) || 0)); build(Math.max(ML_MAX, Math.ceil(v / ML_STEP) * ML_STEP));
+      inp.value = v; mano = false; show(v); place(smooth); syncForm();
+    }
+    const tocca = () => { mano = true; };
+    ['pointerdown', 'touchstart'].forEach(t => el.addEventListener(t, tocca, { passive: true }));
+    // con il mouse: trascinare e rotellina verticale fanno scorrere in orizzontale
+    el.addEventListener('wheel', e => { mano = true; if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); el.scrollBy({ left: e.deltaY }); } }, { passive: false });
+    let x0 = null;
+    el.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; x0 = e.clientX; el.setPointerCapture(e.pointerId); el.style.scrollSnapType = 'none'; });
+    el.addEventListener('pointermove', e => { if (x0 == null) return; el.scrollLeft -= e.clientX - x0; x0 = e.clientX; });
+    const lascia = () => { if (x0 == null) return; x0 = null; el.style.scrollSnapType = ''; el.scrollTo({ left: Math.round(el.scrollLeft / ML_TICK) * ML_TICK, behavior: 'smooth' }); };
+    el.addEventListener('pointerup', lascia); el.addEventListener('pointercancel', lascia);
+    el.addEventListener('scroll', () => {
+      if (!mano) return;
+      const v = Math.min(max, Math.max(0, Math.round(el.scrollLeft / ML_TICK) * ML_STEP));
+      if (v !== Number(inp.value)) { inp.value = v; show(v); syncForm(); }
+    }, { passive: true });
+    el.addEventListener('keydown', e => {
+      const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 5, PageDown: -5 }[e.key];
+      if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); set(e.key === 'Home' ? 0 : max, true); return; }
+      if (!d) return;
+      e.preventDefault();
+      const cur = Math.round(Number(inp.value || 0) / ML_STEP) * ML_STEP;
+      set(Math.min(max, Math.max(0, cur + d * ML_STEP)), true);
     });
+    addEventListener('resize', () => { if (dlg.open && !$('ml-box').hidden) place(); });
+    return { set, place, refresh: () => show(Number(inp.value || 0)) };
+  })();
+  // L'ultimo valore usato per quel tipo di latte, preso dal diario (così vale su ogni telefono).
+  // Senza storia: 80 ml per l'artificiale, "al seno" per il materno.
+  function mlRicordato(latte) {
+    const p = (state.data ? state.data.log : []).filter(r => r.evento === 'Poppata' && r.latte === latte).pop();
+    if (p) return Math.round((p.ml || 0) / ML_STEP) * ML_STEP;
+    return latte === 'Artificiale' ? 80 : 0;
   }
 
   function openForm(kind, ev) {
@@ -492,22 +533,28 @@
     const log = state.data ? state.data.log : [];
     const lastP = log.filter(r => r.evento === 'Poppata' && r.latte !== 'Coccola').pop();
     radio('latte', ev && ev.latte ? ev.latte : (lastP ? lastP.latte : 'Materno'));
-    $('f-ml').value = ev && ev.ml > 0 ? ev.ml : '';
     radio('tipo', ev && group === 'Altro' ? ev.evento : 'Altro');
     const lastPe = state.pesi[state.pesi.length - 1];
     $('f-grammi').value = ev && ev.grammi ? ev.grammi : ''; $('f-grammi').placeholder = lastPe ? `ultimo: ${lastPe.grammi}` : 'es. 3450'; grammiKg();
-    mlChips(); mlVisible();
-    $('f-err').hidden = true; $('f-del').hidden = !ev; syncForm();
+    $('ml-box').hidden = radio('latte') === 'Coccola';
+    $('f-ml').value = ev ? (ev.ml > 0 ? ev.ml : 0) : mlRicordato(radio('latte'));
+    $('f-err').hidden = true; $('f-del').hidden = !ev; syncForm(); wheel.refresh();
     // Il fuoco va sul titolo, non sul primo campo: su iOS il fuoco sulla data aprirebbe subito il selettore.
     // Data, ora e gli altri campi si aprono solo quando li tocchi.
     dlg.showModal();
+    if (group === 'Poppata') wheel.set($('f-ml').value);
     $('dlg-t').focus({ preventScroll: true });
     entra();
   }
 
   function grammiKg() { const v = Number($('f-grammi').value); $('f-grammi-kg').textContent = v >= 500 ? `= ${kg(v)}` : 'Ad esempio 3450 per 3,45 kg.'; }
   $('f-grammi').addEventListener('input', grammiKg);
-  form.addEventListener('change', () => { mlVisible(); syncForm(); });
+  form.addEventListener('change', e => {
+    // cambiando tipo di latte in una registrazione nuova, la rotella va sull'ultimo valore di quel tipo
+    if (e.target.name === 'latte' && !state.editing && e.target.value !== 'Coccola') $('f-ml').value = mlRicordato(e.target.value);
+    mlVisible(); syncForm();
+    if (e.target.name === 'latte') wheel.set($('f-ml').value);
+  });
   form.addEventListener('input', syncForm);
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -520,7 +567,7 @@
       const keep = (k) => ed && ed[k] > 1 && radio(k) === '1' ? ed[k] : Number(radio(k));
       b.pipi = keep('pipi'); b.cacca = keep('cacca');
     }
-    if (g === 'Poppata') { b.latte = radio('latte'); b.ml = $('f-ml').value === '' ? 0 : Number($('f-ml').value); b.fine = ed && ed.fine ? ed.fine : ''; } // il campo non è più nel modulo: un'ora di fine già salvata resta
+    if (g === 'Poppata') { b.latte = radio('latte'); b.ml = b.latte === 'Coccola' ? 0 : Number($('f-ml').value) || 0; b.fine = ed && ed.fine ? ed.fine : ''; } // il campo non è più nel modulo: un'ora di fine già salvata resta
     const err = $('f-err'); err.hidden = true; $('f-save').disabled = true;
     try {
       await call(ed ? api + '?id=' + encodeURIComponent(ed.id) : api, ed ? 'PUT' : 'POST', b);
